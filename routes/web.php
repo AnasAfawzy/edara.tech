@@ -6,11 +6,12 @@ use App\Http\Controllers\BankController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CashVaultController;
 use App\Http\Controllers\CostCenterController;
-use App\Http\Controllers\AccountingSettingsController;
 use App\Http\Controllers\JournalEntryController;
+use App\Http\Controllers\AccountingSettingsController;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
 Route::group(
@@ -42,6 +43,9 @@ Route::group(
         Route::get('/accounting-settings', [AccountingSettingsController::class, 'index'])->name('accounting-settings.index');
         Route::post('/accounting-settings', [AccountingSettingsController::class, 'store'])->name('accounting-settings.store');
 
+
+        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
 
         Route::prefix('currencies')->name('currencies.')->group(function () {
             Route::get('/', [CurrencyController::class, 'index'])->name('index');

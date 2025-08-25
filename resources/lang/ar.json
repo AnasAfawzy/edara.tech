@@ -180,6 +180,8 @@
     "Save Settings": "حفظ الإعدادات",
     "Accounts settings updated successfully": "تم تحديث إعدادات الحسابات بنجاح",
     "Please link the default cash vault account from accounts settings": "يرجى ربط حساب الخزينة الافتراضي من إعدادات الحسابات",
+    "Please link the default bank account from accounts settings": "يرجى ربط حساب البنك الافتراضي من إعدادات الحسابات",
     "Go to Accounts Settings": "اذهب إلى إعدادات الحسابات",
-    "Attention": "تنبيه"
+    "Attention": "تنبيه",
+    "System Settings": "الإعدادات العامة"
 }

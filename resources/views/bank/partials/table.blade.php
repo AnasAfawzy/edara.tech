@@ -12,11 +12,11 @@
             </td>
             <td>
                 <button type="button" class="btn btn-icon btn-text-secondary rounded-pill waves-effect edit-bank"
-                    data-id="{{ $bank->id }}" title="Edit Bank">
+                    data-id="{{ $bank->id }}" title="Edit Bank" @if (!empty($showVaultAccountAlert) && $showVaultAccountAlert) disabled @endif>
                     <i class="icon-base ti tabler-pencil"></i>
                 </button>
                 <button type="button" class="btn btn-icon btn-text-danger rounded-pill waves-effect delete-bank"
-                    data-id="{{ $bank->id }}" title="Delete Bank">
+                    data-id="{{ $bank->id }}" title="Delete Bank" @if (!empty($showVaultAccountAlert) && $showVaultAccountAlert) disabled @endif>
                     <i class="icon-base ti tabler-trash"></i>
                 </button>
             </td>

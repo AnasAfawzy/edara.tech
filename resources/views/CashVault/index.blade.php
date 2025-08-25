@@ -37,7 +37,8 @@
                                     <input type="text" name="search" id="search" class="form-control form-control-sm"
                                         placeholder="{{ __('Search vaults...') }}" value="{{ $search ?? '' }}"
                                         @if (!empty($showVaultAccountAlert) && $showVaultAccountAlert) disabled @endif>
-                                    <button class="btn btn-outline-secondary btn-sm" type="submit">
+                                    <button class="btn btn-outline-secondary btn-sm" type="submit"
+                                        @if (!empty($showVaultAccountAlert) && $showVaultAccountAlert) disabled @endif>
                                         <i class="icon-base ti tabler-search"></i>
                                     </button>
                                 </div>

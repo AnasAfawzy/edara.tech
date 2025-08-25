@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\AccountingSetting;
-use Illuminate\Support\Facades\View;
+use App\Models\Setting;
 
 if (!function_exists('breadcrumb')) {
     /**
@@ -17,5 +17,14 @@ if (!function_exists('acc_setting')) {
     function acc_setting($key, $default = null)
     {
         return AccountingSetting::where('key', $key)->value('value') ?? $default;
+    }
+}
+
+
+
+if (!function_exists('setting')) {
+    function setting($key, $default = null)
+    {
+        return Setting::get($key, $default);
     }
 }

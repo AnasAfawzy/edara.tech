@@ -15,7 +15,8 @@
                                 <input type="hidden" name="search" value="{{ $search ?? '' }}">
                                 <label for="perPage" class="form-label me-2 mb-0">{{ __('Show') }}:</label>
                                 <select name="perPage" id="perPage" class="form-select form-select-sm"
-                                    style="width: auto;" onchange="this.form.submit()">
+                                    @if (!empty($showVaultAccountAlert) && $showVaultAccountAlert) disabled @endif style="width: auto;"
+                                    onchange="this.form.submit()">
                                     <option value="5" {{ ($perPage ?? 10) == 5 ? 'selected' : '' }}>5</option>
                                     <option value="10" {{ ($perPage ?? 10) == 10 ? 'selected' : '' }}>10</option>
                                     <option value="25" {{ ($perPage ?? 10) == 25 ? 'selected' : '' }}>25</option>
@@ -32,8 +33,9 @@
                                 <label for="search" class="form-label me-2 mb-0">{{ __('Search') }}:</label>
                                 <div class="input-group" style="width: 250px;">
                                     <input type="text" name="search" id="search" class="form-control form-control-sm"
-                                        placeholder="{{ __('Search banks...') }}" value="{{ $search ?? '' }}">
-                                    <button class="btn btn-outline-secondary btn-sm" type="submit">
+                                        placeholder="{{ __('Search banks...') }}" value="{{ $search ?? '' }}"
+                                        @if (!empty($showVaultAccountAlert) && $showVaultAccountAlert) disabled @endif>
+                                    <button class="btn btn-outline-secondary btn-sm" type="submit" @if (!empty($showVaultAccountAlert) && $showVaultAccountAlert) disabled @endif>
                                         <i class="icon-base ti tabler-search"></i>
                                     </button>
                                 </div>
@@ -41,7 +43,7 @@
 
                             <!-- زر إضافة بنك جديد -->
                             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#createModal">
+                                data-bs-target="#createModal" @if (!empty($showVaultAccountAlert) && $showVaultAccountAlert) disabled @endif>
                                 <i class="icon-base ti tabler-plus me-1"></i>
                                 {{ __('Add Bank') }}
                             </button>
@@ -208,6 +210,20 @@
 
 @section('scripts')
     <script src="{{ asset('assets/js/sweetalert2.js') }}"></script>
+    @if (!empty($showVaultAccountAlert) && $showVaultAccountAlert)
+        <script>
+            Swal.fire({
+                icon: 'warning',
+                title: '{{ __('Attention') }}',
+                text: '{{ __('Please link the default bank account from accounts settings') }}',
+                confirmButtonText: '{{ __('Go to Accounts Settings') }}'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{{ route('accounting-settings.index') }}";
+                }
+            });
+        </script>
+    @endif
     <script>
         function reloadBanksTable() {
             let search = document.getElementById('search').value;

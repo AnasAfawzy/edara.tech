@@ -37,7 +37,10 @@ class BankController extends Controller
             ->paginate($perPage);
         $currencies = $this->currencyService->getAllCurrencies();
 
-        return view('bank.index', compact('banks', 'currencies', 'perPage', 'search'));
+        $defaultBankAccount = acc_setting('default_bank_account');
+        $showVaultAccountAlert = empty($defaultBankAccount);
+
+        return view('bank.index', compact('banks', 'currencies', 'perPage', 'search', 'showVaultAccountAlert'));
     }
 
     public function show($id)

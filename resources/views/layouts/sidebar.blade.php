@@ -75,6 +75,11 @@
                         <div>{{ __('Accounts Settings') }}</div>
                     </a>
                 </li>
+                <li class="menu-item">
+                    <a href="{{ route('settings.index') }}" class="menu-link">
+                        <div>{{ __('System Settings') }}</div>
+                    </a>
+                </li>
             </ul>
         </li>
     </ul>

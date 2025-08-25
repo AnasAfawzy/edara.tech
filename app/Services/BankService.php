@@ -12,13 +12,14 @@ class BankService extends BaseService
 {
     protected $repository;
     protected $accountService;
-    protected $ParentAccountId = 13;
+    protected $ParentAccountId ;
 
     public function __construct(BankRepository $repository, AccountService $accountService)
     {
         parent::__construct($repository);
         $this->repository = $repository;
         $this->accountService = $accountService;
+        $this->ParentAccountId = acc_setting('default_bank_account');
     }
 
     public function getAllBanks()
