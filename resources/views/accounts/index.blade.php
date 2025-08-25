@@ -23,6 +23,7 @@
     </style>
 @endpush
 @section('content')
+
     <div class="col-md-12 col-12">
         <div class="card">
             <h5 class="card-header d-flex justify-content-between align-items-center">

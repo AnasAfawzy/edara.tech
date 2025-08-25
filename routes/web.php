@@ -33,6 +33,8 @@ Route::group(
         Route::get('/accounts/{account}/delete-info', [AccountController::class, 'getAccountDeleteInfo'])->name('accounts.delete-info');
         Route::resource('accounts', AccountController::class);
 
+        Route::get('cost-centers/tree/data', [CostCenterController::class, 'treeData'])->name('cost-centers.tree.data');
+
         Route::resource('cost-centers', CostCenterController::class);
         Route::resource('journal-entries', JournalEntryController::class);
         Route::resource('cash-vaults', CashVaultController::class);

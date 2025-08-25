@@ -52,7 +52,7 @@ class AccountService extends BaseService
                 return $this->repository->create($data);
             });
         } catch (\Exception $e) {
-            Log::error("فشل إنشاء الحساب: " . $e->getMessage());
+            Log::error(__('Account creation failed') . " : " . $e->getMessage());
             throw new \Exception(__('Account creation failed'));
         }
     }
@@ -63,14 +63,14 @@ class AccountService extends BaseService
         try {
             return DB::transaction(function () use ($id, $data) {
                 if (!$id) {
-                    throw new \Exception("الحساب غير موجود");
+                    throw new \Exception(__("Account not found"));
                 }
                 $data = $this->generateAccountData($data);
                 return $this->repository->update($id, $data);
             });
         } catch (\Exception $e) {
-            Log::error("فشل تعديل الحساب: " . $e->getMessage());
-            throw new \Exception("حصل خطأ أثناء تعديل الحساب");
+            Log::error(__('Account update failed') . " : " . $e->getMessage());
+            throw new \Exception(__('Account update failed'));
         }
     }
 
@@ -85,38 +85,38 @@ class AccountService extends BaseService
             return DB::transaction(function () use ($id) {
                 $account = $this->repository->find($id);
                 if (!$account) {
-                    throw new \Exception("الحساب غير موجود");
+                    throw new \Exception(__("Account not found"));
                 }
 
                 // تحقق من وجود أبناء
                 if ($account->children()->exists()) {
-                    throw new \Exception("لا يمكن حذف هذا الحساب لأنه يحتوي على فروع.");
+                    throw new \Exception(__('This account cannot be deleted because it has branches'));
                 }
 
                 // تحقق من الرصيد الدائن
                 if ($account->creditor != 0 && $account->creditor != null) {
-                    throw new \Exception("لا يمكن حذف هذا الحساب لأنه له رصيد دائن.");
+                    throw new \Exception(__('Cannot delete account because it has a creditor balance'));
                 }
 
                 // تحقق من الرصيد المدين
                 if ($account->debtor != 0 && $account->debtor != null) {
-                    throw new \Exception("لا يمكن حذف هذا الحساب لأنه له رصيد مدين.");
+                    throw new \Exception(__('Cannot delete account because it has a debtor balance'));
                 }
 
                 // تحقق من وجود قيود يومية
                 if ($account->journalEntries()->exists()) {
-                    throw new \Exception("لا يمكن حذف هذا الحساب لأنه مرتبط بقيود يومية.");
+                    throw new \Exception(__('Cannot edit parent account because it has journal entries'));
                 }
 
                 // تحقق من وجود بنوك مرتبطة
                 if (method_exists($account, 'banks') && $account->banks()->exists()) {
-                    throw new \Exception("لا يمكن حذف هذا الحساب لأنه مرتبط ببيانات بنكية.");
+                    throw new \Exception(__('Cannot delete this account because it is linked to bank data'));
                 }
 
                 return (bool) $this->repository->delete($id);
             });
         } catch (\Exception $e) {
-            Log::error("فشل حذف الحساب: " . $e->getMessage());
+            Log::error(__('Account delete failed') . " : " . $e->getMessage());
             throw new \Exception($e->getMessage());
         }
     }
