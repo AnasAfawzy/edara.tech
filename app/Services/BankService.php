@@ -76,7 +76,7 @@ class BankService extends BaseService
         return $bank;
     }
 
-    public function delete($id)
+    public function delete($id): bool
     {
         $bank = $this->repository->findOrFail($id);
 

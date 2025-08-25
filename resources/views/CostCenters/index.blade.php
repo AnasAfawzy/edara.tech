@@ -23,11 +23,7 @@
     </style>
 @endpush
 @section('content')
-    {!! breadcrumb([
-        ['title' => __('Main Data')],
-        ['title' => __('Cost Centers')],
-        ['title' => __('Cost Centers Tree')],
-    ]) !!}
+    {!! breadcrumb([['title' => __('Main Data')], ['title' => __('Cost Centers')]]) !!}
 
     <div class="col-md-12 col-12">
         <div class="card">

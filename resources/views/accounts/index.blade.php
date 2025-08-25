@@ -23,6 +23,7 @@
     </style>
 @endpush
 @section('content')
+    {!! breadcrumb([['title' => __('Main Data')], ['title' => __('Accounts Tree')]]) !!}
 
     <div class="col-md-12 col-12">
         <div class="card">

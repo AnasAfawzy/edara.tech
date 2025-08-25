@@ -3,6 +3,8 @@
 @section('title', __('Cash Vaults'))
 
 @section('content')
+    {!! breadcrumb([['title' => __('Main Data')], ['title' => __('Cash Vaults')]]) !!}
+
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">

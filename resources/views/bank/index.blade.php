@@ -3,7 +3,7 @@
 @section('title', __('Banks'))
 
 @section('content')
-
+    {!! breadcrumb([['title' => __('Main Data')], ['title' => __('Banks')]]) !!}
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">
@@ -225,7 +225,7 @@
                     attachBankRowEvents();
                 });
         }
-        
+
         document.addEventListener('DOMContentLoaded', function() {
             const createForm = document.getElementById('createBankForm');
             const editForm = document.getElementById('editBankForm');
