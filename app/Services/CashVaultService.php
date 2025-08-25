@@ -10,13 +10,14 @@ class CashVaultService extends BaseService
 {
     protected $repository;
     protected $accountService;
-    protected $ParentAccountId = 376;
+    protected $ParentAccountId;
 
     public function __construct(CashVaultRepository $repository, AccountService $accountService)
     {
         parent::__construct($repository);
         $this->repository = $repository;
         $this->accountService = $accountService;
+        $this->ParentAccountId = acc_setting('default_cash_vault_account');
     }
 
     public function getAllCashVaults()

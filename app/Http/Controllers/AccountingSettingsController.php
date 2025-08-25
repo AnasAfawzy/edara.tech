@@ -37,12 +37,11 @@ class AccountingSettingsController extends Controller
             );
         }
 
-        // حفظ أسماء الحسابات للعرض (اختياري)
         foreach (['default_customer_account', 'default_supplier_account', 'default_bank_account', 'default_cash_vault_account'] as $key) {
             $id = $request->input($key);
             $account = null;
             if ($id) {
-                $account = Account::find($id);
+                $account = $this->AccountRepository->find($id);
             }
             $nameKey = $key . '_name';
             $nameValue = $account ? $account->name . ' — ' . $account->code : '';

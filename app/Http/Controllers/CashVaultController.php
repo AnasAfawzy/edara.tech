@@ -24,7 +24,18 @@ class CashVaultController extends Controller
 
         $cashVaults = $this->cashVaultService->searchVaults($search, $perPage);
         $currencies = $this->currencyService->getAllCurrencies();
-        return view('CashVault.index', compact('cashVaults', 'perPage', 'search', 'currencies'));
+
+        // تحقق من وجود حساب خزينة افتراضي
+        $defaultCashVaultAccount = acc_setting('default_cash_vault_account');
+        $showVaultAccountAlert = empty($defaultCashVaultAccount);
+
+        return view('CashVault.index', compact(
+            'cashVaults',
+            'perPage',
+            'search',
+            'currencies',
+            'showVaultAccountAlert'
+        ));
     }
 
     public function store(Request $request)

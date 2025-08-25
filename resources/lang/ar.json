@@ -178,5 +178,8 @@
     "Default Banks Account": "الحساب الافتراضي للبنوك",
     "Default Vaults Account": "الحساب الافتراضي للخزائن",
     "Save Settings": "حفظ الإعدادات",
-    "Accounts settings updated successfully": "تم تحديث إعدادات الحسابات بنجاح"
+    "Accounts settings updated successfully": "تم تحديث إعدادات الحسابات بنجاح",
+    "Please link the default cash vault account from accounts settings": "يرجى ربط حساب الخزينة الافتراضي من إعدادات الحسابات",
+    "Go to Accounts Settings": "اذهب إلى إعدادات الحسابات",
+    "Attention": "تنبيه"
 }
