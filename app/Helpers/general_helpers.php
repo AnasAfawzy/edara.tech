@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\AccountingSetting;
 use Illuminate\Support\Facades\View;
 
 if (!function_exists('breadcrumb')) {
@@ -9,5 +10,12 @@ if (!function_exists('breadcrumb')) {
     function breadcrumb(array $items = [])
     {
         return view('components.breadcrumb', compact('items'))->render();
+    }
+}
+
+if (!function_exists('acc_setting')) {
+    function acc_setting($key, $default = null)
+    {
+        return AccountingSetting::where('key', $key)->value('value') ?? $default;
     }
 }

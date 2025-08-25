@@ -63,8 +63,22 @@
                 </li>
             </ul>
         </li>
+        <li class="menu-item">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base fa-solid fa-gear"></i>
+                <div>{{ __('Settings') }}</div>
+            </a>
 
+            <ul class="menu-sub">
+                <li class="menu-item">
+                    <a href="{{ route('accounting-settings.index') }}" class="menu-link">
+                        <div>{{ __('Accounts Settings') }}</div>
+                    </a>
+                </li>
+            </ul>
+        </li>
     </ul>
+
 </aside>
 
 <div class="menu-mobile-toggler d-xl-none rounded-1">

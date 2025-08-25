@@ -9,7 +9,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CashVaultController;
 use App\Http\Controllers\CostCenterController;
-
+use App\Http\Controllers\AccountingSettingsController;
 use App\Http\Controllers\JournalEntryController;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
@@ -39,7 +39,10 @@ Route::group(
         Route::resource('journal-entries', JournalEntryController::class);
         Route::resource('cash-vaults', CashVaultController::class);
         Route::resource('banks', BankController::class);
-        // Route::resource('currency', CurrencyController::class);
+        Route::get('/accounting-settings', [AccountingSettingsController::class, 'index'])->name('accounting-settings.index');
+        Route::post('/accounting-settings', [AccountingSettingsController::class, 'store'])->name('accounting-settings.store');
+
+
         Route::prefix('currencies')->name('currencies.')->group(function () {
             Route::get('/', [CurrencyController::class, 'index'])->name('index');
             Route::get('/create', [CurrencyController::class, 'create'])->name('create');

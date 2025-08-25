@@ -169,5 +169,14 @@
     "Cost Center Not Found": "مركز التكلفة غير موجود",
     "Cost Center update failed": "فشل تعديل مركز التكلفة",
     "Cannot delete this cost center because it has children": "لا يمكن حذف هذا المركز لأنه يحتوي على فروع",
-    "Cost Center deletion failed": "فشل حذف مركز التكلفة"
+    "Cost Center deletion failed": "فشل حذف مركز التكلفة",
+
+    "Settings": "الإعدادات",
+    "Accounts Settings": "إعدادات الحسابات",
+    "Default Customers Account": "الحساب الافتراضي للعملاء",
+    "Default Suppliers Account": "الحساب الافتراضي للموردين",
+    "Default Banks Account": "الحساب الافتراضي للبنوك",
+    "Default Vaults Account": "الحساب الافتراضي للخزائن",
+    "Save Settings": "حفظ الإعدادات",
+    "Accounts settings updated successfully": "تم تحديث إعدادات الحسابات بنجاح"
 }
