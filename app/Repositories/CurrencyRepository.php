@@ -37,7 +37,7 @@ class CurrencyRepository extends BaseRepository implements CurrencyRepositoryInt
         return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }
 
-    public function find(int $id): ?Model
+    public function find(int $id): Model
     {
         return $this->model->find($id);
     }

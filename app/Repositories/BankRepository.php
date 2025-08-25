@@ -20,7 +20,7 @@ class BankRepository extends BaseRepository implements BankRepositoryInterface
         return $this->model->all();
     }
 
-    public function find(int $id): ?Model
+    public function find(int $id): Model
     {
         return $this->model->find($id);
     }
