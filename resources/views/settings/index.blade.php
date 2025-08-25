@@ -1,115 +1,105 @@
 @extends('layouts.app')
 
-@section('title', 'System Settings')
-
 @section('content')
-<div class="container">
-    <h2 class="mb-4">System Settings</h2>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <h5 class="card-header">الإعدادات العامة</h5>
+                    <div class="card-body">
+                        @if (session('success'))
+                            <div class="alert alert-success">{{ session('success') }}</div>
+                        @endif
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
+                        <form action="{{ route('settings.store') }}" method="POST" enctype="multipart/form-data">
+                            @csrf
 
-    <form action="{{ route('settings.update') }}" method="POST" enctype="multipart/form-data">
-        @csrf
-        @method('PUT')
+                            <h4>بيانات الشركة</h4>
+                            <div class="mb-3">
+                                <label>اسم الشركة</label>
+                                <input type="text" name="company_name" class="form-control"
+                                    value="{{ $settings->company_name ?? '' }}">
+                            </div>
 
-        <ul class="nav nav-tabs" id="settingsTab" role="tablist">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#general">General</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#timezone">Timezone</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tax">Taxes</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#payment">Payments</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#ui">UI</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#report">Reports</a></li>
-        </ul>
+                            <div class="mb-3">
+                                <label>البريد الإلكتروني</label>
+                                <input type="email" name="company_email" class="form-control"
+                                    value="{{ $settings->company_email ?? '' }}">
+                            </div>
 
-        <div class="tab-content border p-3 mt-2">
-            {{-- General --}}
-            <div class="tab-pane fade show active" id="general">
-                <div class="mb-3">
-                    <label>Company Name</label>
-                    <input type="text" name="company_name" class="form-control"
-                           value="{{ $settings['company_name'] ?? '' }}">
-                </div>
-                <div class="mb-3">
-                    <label>Logo</label>
-                    <input type="file" name="company_logo" class="form-control">
-                    @if(!empty($settings['company_logo']))
-                        <img src="{{ asset('storage/'.$settings['company_logo']) }}" height="60" class="mt-2">
-                    @endif
-                </div>
-                <div class="mb-3">
-                    <label>Default Language</label>
-                    <select name="language" class="form-select">
-                        <option value="en" @selected(($settings['language'] ?? '')=='en')>English</option>
-                        <option value="ar" @selected(($settings['language'] ?? '')=='ar')>Arabic</option>
-                    </select>
-                </div>
-            </div>
+                            <div class="mb-3">
+                                <label>رقم الهاتف</label>
+                                <input type="text" name="company_phone" class="form-control"
+                                    value="{{ $settings->company_phone ?? '' }}">
+                            </div>
 
-            {{-- Timezone --}}
-            <div class="tab-pane fade" id="timezone">
-                <div class="mb-3">
-                    <label>Timezone</label>
-                    <input type="text" name="timezone" class="form-control"
-                           value="{{ $settings['timezone'] ?? 'UTC' }}">
-                </div>
-            </div>
+                            <div class="mb-3">
+                                <label>العنوان</label>
+                                <input type="text" name="company_address" class="form-control"
+                                    value="{{ $settings->company_address ?? '' }}">
+                            </div>
 
-            {{-- Taxes --}}
-            <div class="tab-pane fade" id="tax">
-                <div class="mb-3">
-                    <label>Tax Percentage</label>
-                    <input type="number" step="0.01" name="tax_percentage" class="form-control"
-                           value="{{ $settings['tax_percentage'] ?? 0 }}">
-                </div>
-                <div class="mb-3">
-                    <label>VAT Percentage</label>
-                    <input type="number" step="0.01" name="vat_percentage" class="form-control"
-                           value="{{ $settings['vat_percentage'] ?? 0 }}">
-                </div>
-            </div>
+                            <div class="mb-3">
+                                <label>شعار الشركة</label>
+                                <input type="file" name="company_logo" class="form-control">
+                                @if (!empty($settings->company_logo))
+                                    <img src="{{ asset('storage/' . $settings->company_logo) }}" width="100"
+                                        class="mt-2">
+                                @endif
+                            </div>
 
-            {{-- Payments --}}
-            <div class="tab-pane fade" id="payment">
-                <div class="mb-3">
-                    <label>Enabled Payment Methods</label><br>
-                    <label><input type="checkbox" name="payment_cash" value="1"
-                        {{ ($settings['payment_cash'] ?? false) ? 'checked' : '' }}> Cash</label><br>
-                    <label><input type="checkbox" name="payment_bank" value="1"
-                        {{ ($settings['payment_bank'] ?? false) ? 'checked' : '' }}> Bank Transfer</label><br>
-                    <label><input type="checkbox" name="payment_card" value="1"
-                        {{ ($settings['payment_card'] ?? false) ? 'checked' : '' }}> Credit Card</label>
-                </div>
-            </div>
+                            <h4>الإعدادات المالية</h4>
+                            <div class="mb-3">
+                                <label>الرقم الضريبي</label>
+                                <input type="text" name="tax_number" class="form-control"
+                                    value="{{ $settings->tax_number ?? '' }}">
+                            </div>
 
-            {{-- UI --}}
-            <div class="tab-pane fade" id="ui">
-                <div class="mb-3">
-                    <label>Theme</label>
-                    <select name="theme" class="form-select">
-                        <option value="light" @selected(($settings['theme'] ?? '')=='light')>Light</option>
-                        <option value="dark" @selected(($settings['theme'] ?? '')=='dark')>Dark</option>
-                    </select>
-                </div>
-            </div>
+                            <div class="mb-3">
+                                <label>نسبة الضريبة الافتراضية</label>
+                                <input type="number" step="0.01" name="default_tax_rate" class="form-control"
+                                    value="{{ $settings->default_tax_rate ?? '' }}">
+                            </div>
 
-            {{-- Reports --}}
-            <div class="tab-pane fade" id="report">
-                <div class="mb-3">
-                    <label>Report Header</label>
-                    <textarea name="report_header" class="form-control">{{ $settings['report_header'] ?? '' }}</textarea>
-                </div>
-                <div class="mb-3">
-                    <label>Report Footer</label>
-                    <textarea name="report_footer" class="form-control">{{ $settings['report_footer'] ?? '' }}</textarea>
+                            <h4>إعدادات النظام</h4>
+                            <div class="mb-3">
+                                <label>العملة</label>
+                                <input type="text" name="currency" class="form-control"
+                                    value="{{ $settings->currency ?? '' }}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label>المنطقة الزمنية</label>
+                                <input type="text" name="timezone" class="form-control"
+                                    value="{{ $settings->timezone ?? '' }}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label>اللغة</label>
+                                <input type="text" name="language" class="form-control"
+                                    value="{{ $settings->language ?? '' }}">
+                            </div>
+
+                            <h4>طرق الدفع</h4>
+                            <div class="mb-3">
+                                <select name="payment_methods[]" class="form-control" multiple>
+                                    <option value="cash"
+                                        {{ in_array('cash', $settings->payment_methods ?? []) ? 'selected' : '' }}>كاش
+                                    </option>
+                                    <option value="card"
+                                        {{ in_array('card', $settings->payment_methods ?? []) ? 'selected' : '' }}>بطاقة
+                                    </option>
+                                    <option value="bank"
+                                        {{ in_array('bank', $settings->payment_methods ?? []) ? 'selected' : '' }}>تحويل
+                                        بنكي</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">حفظ</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <div class="mt-3">
-            <button class="btn btn-primary">Save Settings</button>
-        </div>
-    </form>
-</div>
+    </div>
 @endsection

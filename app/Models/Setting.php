@@ -6,15 +6,21 @@ use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
-    protected $fillable = ['key', 'value'];
+    protected $fillable = [
+        'company_name',
+        'company_email',
+        'company_phone',
+        'company_address',
+        'company_logo',
+        'tax_number',
+        'default_tax_rate',
+        'currency',
+        'timezone',
+        'language',
+        'payment_methods',
+    ];
 
-    public static function get($key, $default = null)
-    {
-        return optional(static::where('key', $key)->first())->value ?? $default;
-    }
-
-    public static function set($key, $value)
-    {
-        return static::updateOrCreate(['key' => $key], ['value' => $value]);
-    }
+    protected $casts = [
+        'payment_methods' => 'array',
+    ];
 }

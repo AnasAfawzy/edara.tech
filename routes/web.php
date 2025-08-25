@@ -45,7 +45,7 @@ Route::group(
 
 
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
-        Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::post('/settings', [SettingController::class, 'store'])->name('settings.store');
 
         Route::prefix('currencies')->name('currencies.')->group(function () {
             Route::get('/', [CurrencyController::class, 'index'])->name('index');
@@ -60,6 +60,7 @@ Route::group(
             Route::get('/export/csv', [CurrencyController::class, 'exportCsv'])->name('export.csv');
             Route::get('/export/pdf', [CurrencyController::class, 'exportPdf'])->name('export.pdf');
         });
+
         Route::get('/dashboard', function () {
             return view('dashboard');
         })->middleware(['auth', 'verified'])->name('dashboard');
