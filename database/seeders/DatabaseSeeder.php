@@ -3,8 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Spatie\Permission\Models\Role;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Module;
+use App\Models\Role;
+use Spatie\Permission\Models\Permission;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -15,23 +16,31 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        // التأكد من وجود الدور admin وإنشاؤه إذا لم يكن موجوداً
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
 
-        // $user = User::factory()->create([
-        //     'name' => 'Admin',
-        //     'email' => 'admin@admin.com',
-        //     'password' => Hash::make('password'),
+        // ربط جميع الصلاحيات بالدور admin دائماً
+        $permissions = Permission::pluck('name')->toArray();
+        $adminRole->syncPermissions($permissions);
+
+        // ربط جميع الموديولات بدور الأدمن
+        $modules = Module::pluck('id')->toArray();
+        $adminRole->modules()->sync($modules);
+
+        // ربط المستخدم admin@admin.com بالدور admin إذا كان موجوداً
+        $user = User::where('email', 'admin@admin.com')->first();
+        if ($user && !$user->hasRole('admin')) {
+            $user->assignRole('admin');
+        }
+
+        // $this->call([
+        //     AccountSeeder::class,
+        //     CashVaultPerantAccountSeeder::class,
+        //     CashVaultTestSeeder::class,
+        //     CostCenterSeeder::class,
+        //     JournalEntrySeeder::class,
+        //     JournalEntryTestSeeder::class,
+        //     BankSeeder::class,
         // ]);
-        // $user->assignRole('admin');
-
-        $this->call([
-            AccountSeeder::class,
-            CashVaultPerantAccountSeeder::class,
-            CashVaultTestSeeder::class,
-            CostCenterSeeder::class,
-            JournalEntrySeeder::class,
-            JournalEntryTestSeeder::class,
-            BankSeeder::class,
-        ]);
     }
 }

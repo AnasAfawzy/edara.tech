@@ -3,6 +3,7 @@
 use Livewire\Livewire;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BankController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ProfileController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CashVaultController;
 use App\Http\Controllers\CostCenterController;
 use App\Http\Controllers\JournalEntryController;
+use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\AccountingSettingsController;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
@@ -60,7 +62,13 @@ Route::group(
             Route::get('/export/csv', [CurrencyController::class, 'exportCsv'])->name('export.csv');
             Route::get('/export/pdf', [CurrencyController::class, 'exportPdf'])->name('export.pdf');
         });
+        Route::resource('users', UserManagementController::class);
+        Route::get('roles/search', [RoleController::class, 'search'])->name('roles.search');
 
+        Route::resource('roles', RoleController::class);
+
+        Route::get('roles/{role}/permissions', [RoleController::class, 'editPermissions'])->name('roles.edit_permissions');
+        Route::put('roles/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('roles.update_permissions');
         Route::get('/dashboard', function () {
             return view('dashboard');
         })->middleware(['auth', 'verified'])->name('dashboard');

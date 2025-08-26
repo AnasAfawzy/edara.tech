@@ -1,3 +1,11 @@
+@php
+    use App\Models\Module;
+    $user = auth('web')->user();
+    $userRole = $user ? $user->roles->first() : null;
+    $mainModules = $userRole ? $userRole->modules()->whereNull('parent_id')->get() : collect();
+
+@endphp
+
 <aside id="layout-menu" class="layout-menu menu-vertical menu">
     <div class="app-brand demo">
         <a href="index.html" class="app-brand-link">
@@ -27,63 +35,31 @@
     </div>
 
     <div class="menu-inner-shadow"></div>
-
     <ul class="menu-inner py-1">
-        <li class="menu-item">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon icon-base fa-solid fa-database"></i>
-                <div>{{ __('Main Data') }}</div>
-            </a>
-
-            <ul class="menu-sub">
-                <li class="menu-item">
-                    <a href="{{ route('currencies.index') }}" class="menu-link">
-                        <div>{{ __('Currency') }}</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ route('banks.index') }}" class="menu-link">
-                        <div>{{ __('Banks') }}</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ route('cash-vaults.index') }}" class="menu-link">
-                        <div>{{ __('Cash Vaults') }}</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ route('accounts.index') }}" class="menu-link">
-                        <div>{{ __('Accounts Tree') }}</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ route('cost-centers.index') }}" class="menu-link">
-                        <div>{{ __('Cost Centers') }}</div>
-                    </a>
-                </li>
-            </ul>
-        </li>
-        <li class="menu-item">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon icon-base fa-solid fa-gear"></i>
-                <div>{{ __('Settings') }}</div>
-            </a>
-
-            <ul class="menu-sub">
-                <li class="menu-item">
-                    <a href="{{ route('accounting-settings.index') }}" class="menu-link">
-                        <div>{{ __('Accounts Settings') }}</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ route('settings.index') }}" class="menu-link">
-                        <div>{{ __('System Settings') }}</div>
-                    </a>
-                </li>
-            </ul>
-        </li>
+        @foreach ($mainModules as $module)
+            <li class="menu-item">
+                <a href="{{ $module->route ? route($module->route) : 'javascript:void(0);' }}"
+                    class="menu-link {{ $userRole->modules()->where('parent_id', $module->id)->count() ? 'menu-toggle' : '' }}">
+                    <i class="menu-icon icon-base fa {{ $module->icon }}"></i>
+                    <div>{{ __($module->label) }}</div>
+                </a>
+                @php
+                    $children = $userRole->modules()->where('parent_id', $module->id)->get();
+                @endphp
+                @if ($children->count())
+                    <ul class="menu-sub">
+                        @foreach ($children as $child)
+                            <li class="menu-item">
+                                <a href="{{ route($child->route) }}" class="menu-link">
+                                    <div>{{ __($child->label) }}</div>
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </li>
+        @endforeach
     </ul>
-
 </aside>
 
 <div class="menu-mobile-toggler d-xl-none rounded-1">
