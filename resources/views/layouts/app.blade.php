@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="layout-navbar-fixed layout-menu-fixed layout-compact"
-    dir="ltr" data-skin="default" data-assets-path="../../assets/" data-template="vertical-menu-template"
+    dir="ltr" data-skin="default" data-assets-path="{{ asset('assets') }}/" data-template="vertical-menu-template"
     data-bs-theme="light">
 
 <head>
@@ -85,8 +85,42 @@
 </head>
 
 <body class="font-sans antialiased">
+    @if (session('success'))
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: "{{ session('swal_title') ?? 'تمت العملية بنجاح' }}",
+                text: "{{ session('success') }}",
+                showConfirmButton: false,
+                timer: 1800,
+                customClass: {
+                    title: 'swal-title-custom',
+                    popup: 'swal-popup-custom',
+                    content: 'swal-content-custom'
+                }
+            });
+        </script>
+    @endif
+
+    @if (session('error'))
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: "{{ session('swal_title') ?? 'خطأ!' }}",
+                text: "{{ session('error') }}",
+                showConfirmButton: false,
+                timer: 1800,
+                customClass: {
+                    title: 'swal-title-custom',
+                    popup: 'swal-popup-custom',
+                    content: 'swal-content-custom'
+                }
+            });
+        </script>
+    @endif
     <div class="layout-wrapper layout-content-navbar">
         <div class="layout-container">
+
             @include('layouts.sidebar')
 
 
@@ -156,6 +190,7 @@
         window.currentLang = "{{ app()->getLocale() }}";
         window.currentDir = "{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}";
     </script>
+    <script src="{{ asset('assets/js/sweetalert2.js') }}"></script>
 
     {{-- Optimize modal in livewire to open and close --}}
     <script>
@@ -192,6 +227,8 @@
         // })
     </script>
     {{-- End optimize modal in livewire to open and close --}}
+
+
 </body>
 
 </html>

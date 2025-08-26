@@ -78,7 +78,7 @@ class TemplateCustomizer {
     if (!window.Helpers) throw new Error('window.Helpers required.')
     this.settings = {}
     this.settings.displayCustomizer = typeof displayCustomizer !== 'undefined' ? displayCustomizer : DISPLAY_CUSTOMIZER
-    this.settings.lang = lang || 'en'
+    this.settings.lang = lang || window.appLocale || 'en'
     if (defaultPrimaryColor) {
       this.settings.defaultPrimaryColor = defaultPrimaryColor
       primaryColorFlag = true
@@ -247,7 +247,7 @@ class TemplateCustomizer {
     this._setSetting('Rtl', String(rtl))
   }
 
-  setLang(lang, updateStorage = true, force = false) {
+  setLang(lang , updateStorage = true, force = false) {
     if (lang === this.settings.lang && !force) return
     if (!TemplateCustomizer.LANGUAGES[lang]) throw new Error(`Language "${lang}" not found!`)
 
@@ -489,6 +489,8 @@ class TemplateCustomizer {
 
   // Setup theme settings controls and events
   _setup(_container = document) {
+    const assetsPath = document.documentElement.getAttribute('data-assets-path') || '/assets/';
+
     // Function to create customizer elements
     const createOptionElement = (nameVal, title, inputName, image, isIcon = false) => {
       const divElement = document.createElement('div')
@@ -519,6 +521,7 @@ class TemplateCustomizer {
         // If it's an icon, insert the icon HTML directly
         divElement.querySelector('.custom-option-body').innerHTML = image
       } else {
+        console.log(assetsPath);
         // Otherwise, assume it's an SVG file name and fetch its content
         fetch(`${assetsPath}img/customizer/${image}`)
           .then(response => response.text())

@@ -10,7 +10,7 @@
                 <div class="card">
                     <h5 class="card-header">{{ __('إضافة دور') }}</h5>
                     <div class="card-body">
-                        <form action="{{ route('roles.store') }}" method="POST">
+                        <form id="roleCreateForm" action="{{ route('roles.store') }}" method="POST">
                             @csrf
                             <div class="mb-3">
                                 <label>اسم الدور</label>

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Repositories\BankRepository;
+use App\Repositories\RoleRepository;
 use App\Repositories\AccountRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\CurrencyRepository;
@@ -10,6 +11,7 @@ use App\Repositories\CashVaultRepository;
 use App\Repositories\CostCenterRepository;
 use App\Repositories\JournalEntryRepository;
 use App\Repositories\Interfaces\BankRepositoryInterface;
+use App\Repositories\Interfaces\RoleRepositoryInterface;
 use App\Repositories\Interfaces\AccountRepositoryInterface;
 use App\Repositories\Interfaces\CurrencyRepositoryInterface;
 use App\Repositories\Interfaces\CashVaultRepositoryInterface;
@@ -28,6 +30,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(CashVaultRepositoryInterface::class, CashVaultRepository::class);
         $this->app->bind(BankRepositoryInterface::class, BankRepository::class);
         $this->app->bind(CurrencyRepositoryInterface::class, CurrencyRepository::class);
+        $this->app->bind(RoleRepositoryInterface::class, RoleRepository::class);
         // وهكذا لأي Repository جديد
     }
 

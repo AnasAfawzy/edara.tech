@@ -183,5 +183,12 @@
     "Please link the default bank account from accounts settings": "يرجى ربط حساب البنك الافتراضي من إعدادات الحسابات",
     "Go to Accounts Settings": "اذهب إلى إعدادات الحسابات",
     "Attention": "تنبيه",
-    "System Settings": "الإعدادات العامة"
+    "System Settings": "الإعدادات العامة",
+
+    "Roles": "الأدوار",
+    "Search for role...": "بحث عن دور...",
+    "Add Role": "إضافة دور",
+    "Role": "دور",
+    "Permissions": "الصلاحيات",
+    "There are no roles": "لا توجد أدوار"
 }

@@ -16,15 +16,14 @@ use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\AccountingSettingsController;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
+
 Route::group(
     [
         'prefix' => LaravelLocalization::setLocale(),
         'middleware' => ['localeSessionRedirect', 'localizationRedirect', 'localeViewPath']
     ],
     function () {
-        // Livewire::setUpdateRoute(function ($handle) {
-        //     return Route::post('/livewire/update', $handle);
-        // });
+ 
         Route::get('/', function () {
             return view('auth.login');
         });
@@ -67,8 +66,6 @@ Route::group(
 
         Route::resource('roles', RoleController::class);
 
-        Route::get('roles/{role}/permissions', [RoleController::class, 'editPermissions'])->name('roles.edit_permissions');
-        Route::put('roles/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('roles.update_permissions');
         Route::get('/dashboard', function () {
             return view('dashboard');
         })->middleware(['auth', 'verified'])->name('dashboard');
