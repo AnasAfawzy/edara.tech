@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use phpDocumentor\Reflection\PseudoTypes\True_;
 
 class Account extends Model
 {
@@ -26,19 +25,34 @@ class Account extends Model
         'slave' => 'boolean',
     ];
 
+    /**
+     * Parent account relation.
+     */
     public function parent()
     {
         return $this->belongsTo(Account::class, 'ownerEl');
     }
 
+    /**
+     * Children accounts relation.
+     */
     public function children()
     {
         return $this->hasMany(Account::class, 'ownerEl');
     }
 
-    public function scopeMain_Accounts($query)
+    /**
+     * Scope: main accounts (has_sub = true OR slave = false)
+     */
+    public function scopeMainAccounts($query)
     {
         return $query->where('has_sub', true)->orWhere('slave', false);
+    }
+
+    // backward-compatible alias for older scope name
+    public function scopeMain_Accounts($query)
+    {
+        return $this->scopeMainAccounts($query);
     }
 
     // تفاصيل القيود المرتبطة بالحساب

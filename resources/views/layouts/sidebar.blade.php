@@ -1,9 +1,31 @@
 @php
-    use App\Models\Module;
-    $user = auth('web')->user();
-    $userRole = $user ? $user->roles->first() : null;
-    $mainModules = $userRole ? $userRole->modules()->whereNull('parent_id')->get() : collect();
+    use Illuminate\Support\Facades\Auth;
+    use Illuminate\Support\Facades\Cache;
+    $user = Auth::guard('web')->user();
 
+    // debug logs (تبصير فقط عند غياب المستخدم/الدور)
+    if (!$user) {
+        \Log::debug('Sidebar: no authenticated user', ['url' => request()->fullUrl()]);
+    }
+
+    // حاول جلب الدور مع روابطه بكفاءة
+    $userRole = null;
+    if ($user) {
+        $user->loadMissing('roles.modules'); // يقلل استعلامات N+1
+        $userRole = $user->roles->first();
+        if (!$userRole) {
+            \Log::debug('Sidebar: authenticated user has no role', ['user_id' => $user->id]);
+        }
+    }
+
+    // cache للـ modules لكل role لتقليل الاستعلامات (60 ثانية كمثال)
+    $mainModules = collect();
+    if ($userRole) {
+        $cacheKey = "role_main_modules_{$userRole->id}";
+        $mainModules = Cache::remember($cacheKey, 60, function () use ($userRole) {
+            return $userRole->modules->whereNull('parent_id')->values();
+        });
+    }
 @endphp
 
 <aside id="layout-menu" class="layout-menu menu-vertical menu">
