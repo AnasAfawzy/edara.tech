@@ -1,20 +1,21 @@
 @extends('layouts.app')
 
-@section('title', __('تعديل دور'))
+@section('title', __('Edit Role'))
 
 @section('content')
-    {!! breadcrumb([['title' => __('إدارة المستخدمين')], ['title' => __('تعديل دور')]]) !!}
+    {!! breadcrumb([['title' => __('Settings')], ['title' => __('Roles')], ['title' => __('Edit Role')]]) !!}
+
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <h5 class="card-header">{{ __('تعديل دور') }}</h5>
+                    <h5 class="card-header">{{ __('Edit Role') }}</h5>
                     <div class="card-body">
                         <form action="{{ route('roles.update', $role) }}" method="POST">
                             @csrf
                             @method('PUT')
                             <div class="mb-3">
-                                <label>اسم الدور</label>
+                                <label>{{ __('Role Name') }}</label>
                                 <input type="text" name="name" class="form-control" value="{{ $role->name }}"
                                     required>
                             </div>
@@ -22,24 +23,19 @@
                                 <table class="table text-center">
                                     <thead>
                                         <tr>
-                                            <th colspan="7" class="text-center bg-primary text-white">
-                                                الصلاحيات حسب الموديولات
-                                            </th>
-                                        </tr>
-                                        <tr>
-                                            <th>الموديول</th>
-                                            <th>الظهور في السايد بار</th>
-                                            <th>عرض</th>
-                                            <th>إضافة</th>
-                                            <th>تعديل</th>
-                                            <th>حذف</th>
-                                            <th>الكل</th>
+                                            <th>{{ __('Module') }}</th>
+                                            <th>{{ __('Show in Sidebar') }}</th>
+                                            <th>{{ __('View') }}</th>
+                                            <th>{{ __('Add') }}</th>
+                                            <th>{{ __('Edit') }}</th>
+                                            <th>{{ __('Delete') }}</th>
+                                            <th>{{ __('All') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($modules->where('parent_id', null) as $parent)
                                             <tr class="table-primary">
-                                                <td><strong>{{ $parent->label }}</strong></td>
+                                                <td><strong>{{ __($parent->label) }}</strong></td>
                                                 <td>
                                                     <input type="checkbox" name="sidebar_modules[]"
                                                         value="{{ $parent->id }}"
@@ -49,7 +45,7 @@
                                             </tr>
                                             @foreach ($modules->where('parent_id', $parent->id) as $child)
                                                 <tr>
-                                                    <td style="padding-right:30px;">&#8627; {{ $child->label }}</td>
+                                                    <td style="padding-right:30px;">&#8627; {{ __($child->label) }}</td>
                                                     <td>
                                                         <input type="checkbox" name="sidebar_modules[]"
                                                             value="{{ $child->id }}"
@@ -77,6 +73,10 @@
                                 <i class="icon-base ti tabler-device-floppy me-1"></i>
                                 {{ __('تحديث') }}
                             </button>
+                            <a href="{{ route('roles.index') }}" class="btn btn-secondary ms-2">
+                                <i class="icon-base ti tabler-arrow-left me-1"></i>
+                                {{ __('Back') }}
+                            </a>
                         </form>
                     </div>
                 </div>
@@ -138,7 +138,8 @@
                 document.querySelectorAll('.perm-' + moduleId).forEach(function(perm) {
                     if (!perm.checked) allChecked = false;
                 });
-                let sidebarCheckbox = document.querySelector('input[name="sidebar_modules[]"][value="' + moduleId + '"]');
+                let sidebarCheckbox = document.querySelector('input[name="sidebar_modules[]"][value="' +
+                    moduleId + '"]');
                 if (sidebarCheckbox && !sidebarCheckbox.checked) allChecked = false;
                 checkAll.checked = allChecked;
             });

@@ -34,6 +34,7 @@
     "Yes Delete": "نعم، احذف",
     "Cancel": "إلغاء",
     "Save": "حفظ",
+    "Back": "رجوع",
     "success": "نجاح",
     "Deleted Successfully": "تم الحذف بنجاح",
     "Export": "تصدير",
@@ -190,5 +191,18 @@
     "Add Role": "إضافة دور",
     "Role": "دور",
     "Permissions": "الصلاحيات",
-    "There are no roles": "لا توجد أدوار"
+    "There are no roles": "لا توجد أدوار",
+    "The role has been added successfully": "تم إضافة الدور بنجاح",
+    "The role has been updated successfully": "تم تحديث الدور بنجاح",
+    "The role has been deleted successfully": "تم حذف الدور بنجاح",
+    "The operation was completed successfully": "تمت العملية بنجاح",
+    "Are you sure you want to delete this role?": "هل أنت متأكد أنك تريد حذف هذا الدور؟",
+    "This role cannot be deleted because it is assigned to users": "لا يمكن حذف هذا الدور لأنه مرتبط بمستخدمين",
+    "Role Name": "أسم الدور",
+    "Module": "الموديول",
+    "Show in Sidebar": "عرض في السايدبار",
+    "Create": "إضافة",
+    "All": "الكل",
+    "Users": "المستخدمين",
+    "Role View": "عرض الدور"
 }

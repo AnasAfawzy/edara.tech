@@ -20,6 +20,7 @@
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.ico') }}" />
 
+    <script src="{{ asset('assets/js/sweetalert2.js') }}"></script>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -190,7 +191,6 @@
         window.currentLang = "{{ app()->getLocale() }}";
         window.currentDir = "{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}";
     </script>
-    <script src="{{ asset('assets/js/sweetalert2.js') }}"></script>
 
     {{-- Optimize modal in livewire to open and close --}}
     <script>

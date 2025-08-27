@@ -12,24 +12,18 @@
         </td>
         <td>
             <div class="d-flex gap-2 justify-content-center">
+                @can('view roles')
+                    <a href="{{ route('roles.show', $role) }}" class="btn btn-icon bg-transparent shadow-none"
+                        title="{{ __('View') }}">
+                        <i class="icon-base ti tabler-eye"></i>
+                    </a>
+                @endcan
                 @can('edit roles')
                     <a href="{{ route('roles.edit', $role) }}" class="btn btn-icon bg-transparent shadow-none"
                         title="{{ __('Edit') }}">
                         <i class="icon-base ti tabler-pencil"></i>
                     </a>
                 @endcan
-                {{-- <a href="{{ route('roles.edit_permissions', $role) }}" class="btn btn-icon bg-transparent shadow-none"
-                    title="الصلاحيات">
-                    <i class="icon-base ti tabler-lock"></i>
-                </a> --}}
-                {{-- @can('delete roles')
-                    <form action="{{ route('roles.destroy', $role) }}" method="POST" style="display:inline">
-                        @csrf @method('DELETE')
-                        <button class="btn btn-icon bg-transparent shadow-none" title="{{ __('Delete') }}">
-                            <i class="icon-base ti tabler-trash"></i>
-                        </button>
-                    </form>
-                @endcan --}}
                 @can('delete roles')
                     <button type="button" class="btn btn-icon bg-transparent shadow-none btn-delete-role"
                         data-url="{{ route('roles.destroy', $role) }}" title="{{ __('Delete') }}">

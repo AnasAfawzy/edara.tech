@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\DB;
 use App\Repositories\RoleRepository;
 
 class RoleService extends BaseService
@@ -42,5 +43,21 @@ class RoleService extends BaseService
     public function paginateWithPermissions(int $perPage, string $search = '')
     {
         return $this->repository->paginateWithPermissions($perPage, $search);
+    }
+
+    public function roleHasUsers(int $id): bool
+    {
+        $role = $this->findRole($id);
+        if (! $role) {
+            return false;
+        }
+
+        // Prefer relation if available (Role::users morph relation)
+        if (method_exists($role, 'users')) {
+            return (bool) $role->users()->exists();
+        }
+
+        // fallback to Spatie pivot table
+        return DB::table('model_has_roles')->where('role_id', $role->id)->exists();
     }
 }

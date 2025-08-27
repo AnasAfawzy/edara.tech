@@ -1,38 +1,9 @@
-@php
-    use Illuminate\Support\Facades\Auth;
-    use Illuminate\Support\Facades\Cache;
-    $user = Auth::guard('web')->user();
-
-    // debug logs (تبصير فقط عند غياب المستخدم/الدور)
-    if (!$user) {
-        \Log::debug('Sidebar: no authenticated user', ['url' => request()->fullUrl()]);
-    }
-
-    // حاول جلب الدور مع روابطه بكفاءة
-    $userRole = null;
-    if ($user) {
-        $user->loadMissing('roles.modules'); // يقلل استعلامات N+1
-        $userRole = $user->roles->first();
-        if (!$userRole) {
-            \Log::debug('Sidebar: authenticated user has no role', ['user_id' => $user->id]);
-        }
-    }
-
-    // cache للـ modules لكل role لتقليل الاستعلامات (60 ثانية كمثال)
-    $mainModules = collect();
-    if ($userRole) {
-        $cacheKey = "role_main_modules_{$userRole->id}";
-        $mainModules = Cache::remember($cacheKey, 60, function () use ($userRole) {
-            return $userRole->modules->whereNull('parent_id')->values();
-        });
-    }
-@endphp
-
 <aside id="layout-menu" class="layout-menu menu-vertical menu">
     <div class="app-brand demo">
-        <a href="index.html" class="app-brand-link">
+        <a href="{{ url('/') }}" class="app-brand-link">
             <span class="app-brand-logo demo">
                 <span class="text-primary">
+                    <!-- لوجو -->
                     <svg width="32" height="22" viewBox="0 0 32 22" fill="none"
                         xmlns="http://www.w3.org/2000/svg">
                         <path fill-rule="evenodd" clip-rule="evenodd"
@@ -40,8 +11,6 @@
                             fill="currentColor" />
                         <path opacity="0.06" fill-rule="evenodd" clip-rule="evenodd"
                             d="M7.69824 16.4364L12.5199 3.23696L16.5541 7.25596L7.69824 16.4364Z" fill="#161616" />
-                        <path opacity="0.06" fill-rule="evenodd" clip-rule="evenodd"
-                            d="M8.07751 15.9175L13.9419 4.63989L16.5849 7.28475L8.07751 15.9175Z" fill="#161616" />
                         <path fill-rule="evenodd" clip-rule="evenodd"
                             d="M7.77295 16.3566L23.6563 0H32V6.88383C32 6.88383 31.8262 9.17836 30.6591 10.4057L19.7824 22H13.6938L7.77295 16.3566Z"
                             fill="currentColor" />

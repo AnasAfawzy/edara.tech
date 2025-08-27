@@ -71,8 +71,21 @@
 @endsection
 
 @push('scripts')
-    {{-- <script src="{{ asset('assets/js/sweetalert2.js') }}"></script> --}}
     <script>
+        const The_operation_was_completed_successfully = {!! json_encode(__('The operation was completed successfully')) !!};
+        const An_error_occurred_while_saving = {!! json_encode(__('An error occurred while saving')) !!};
+        const Error = {!! json_encode(__('Error')) !!};
+        const Confirm_delete = {!! json_encode(__('Confirm delete')) !!};
+        const Are_you_sure_you_want_to_delete_this_role = {!! json_encode(__('Are you sure you want to delete this role?')) !!};
+        const yes_delete_it = {!! json_encode(__('Yes, delete it')) !!};
+        const Cancel = {!! json_encode(__('Cancel')) !!};
+        const Delete = {!! json_encode(__('Deleted')) !!};
+        const An_error_occurred_while_deleting = {!! json_encode(__('An error occurred while deleting')) !!};
+        const Success = {!! json_encode(__('Success')) !!};
+        const This_role_cannot_be_deleted_because_it_is_assigned_to_users = {!! json_encode(__('This role cannot be deleted because it is assigned to users')) !!};
+
+
+
         let searchInput = document.getElementById('search');
         let perPageInput = document.getElementById('perPage');
 
@@ -118,7 +131,7 @@
                     .then(data => {
                         if (data.status) {
                             Swal.fire({
-                                title: 'تمت العملية بنجاح',
+                                title: The_operation_was_completed_successfully,
                                 text: data.message,
                                 icon: 'success',
                                 timer: 1800,
@@ -128,16 +141,16 @@
                             });
                         } else {
                             Swal.fire({
-                                title: 'خطأ!',
-                                text: data.message || 'حدث خطأ أثناء الحفظ',
+                                title: Error,
+                                text: data.message || An_error_occurred_while_saving,
                                 icon: 'error'
                             });
                         }
                     })
                     .catch(() => {
                         Swal.fire({
-                            title: 'خطأ!',
-                            text: 'حدث خطأ أثناء الحفظ',
+                            title: Error,
+                            text: An_error_occurred_while_saving,
                             icon: 'error'
                         });
                     });
@@ -152,14 +165,14 @@
                 let btn = e.target.closest('.btn-delete-role');
                 let url = btn.getAttribute('data-url');
                 Swal.fire({
-                    title: 'تأكيد الحذف',
-                    text: 'هل أنت متأكد أنك تريد حذف هذا الدور؟',
+                    title: Confirm_delete,
+                    text: Are_you_sure_you_want_to_delete_this_role,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
                     cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'نعم، احذف!',
-                    cancelButtonText: 'إلغاء'
+                    confirmButtonText: yes_delete_it,
+                    cancelButtonText: Cancel
                 }).then((result) => {
                     if (result.isConfirmed) {
                         fetch(url, {
@@ -182,7 +195,7 @@
                             .then(data => {
                                 if (data.status) {
                                     Swal.fire({
-                                        title: 'تم الحذف',
+                                        title: Delete,
                                         text: data.message,
                                         icon: 'success',
                                         timer: 1500,
@@ -191,16 +204,18 @@
                                     fetchRoles();
                                 } else {
                                     Swal.fire({
-                                        title: 'خطأ!',
-                                        text: data.message || 'حدث خطأ أثناء الحذف',
+                                        title: Error,
+                                        text: data.message || An_error_occurred_while_deleting,
                                         icon: 'error'
                                     });
                                 }
                             })
-                            .catch(() => {
+                            .catch((err) => {
+                                const msg = err && err.message ? err.message :
+                                    (typeof err === 'string' ? err : An_error_occurred_while_deleting);
                                 Swal.fire({
-                                    title: 'خطأ!',
-                                    text: 'حدث خطأ أثناء الحذف',
+                                    title: Error,
+                                    text: msg,
                                     icon: 'error'
                                 });
                             });
@@ -212,7 +227,7 @@
         function showSwal(message, type = 'success') {
             Swal.fire({
                 icon: type,
-                title: type === 'success' ? 'تمت العملية بنجاح' : 'خطأ!',
+                title: type === 'success' ? Success : Error,
                 text: message,
                 showConfirmButton: false,
                 timer: 1800

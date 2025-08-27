@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Module;
 use Illuminate\Http\Request;
 use App\Services\RoleService;
-use App\Models\Module;
+use Illuminate\Support\Facades\DB;
 
 class RoleController extends Controller
 {
@@ -21,6 +22,23 @@ class RoleController extends Controller
         $search = $request->get('search', '') ?? '';
         $roles = $this->roleService->paginateWithPermissions($perPage, (string)$search);
         return view('roles.index', compact('roles', 'perPage', 'search'));
+    }
+
+    public function show($id)
+    {
+        $role = $this->roleService->findRole((int) $id);
+        if (! $role) {
+            return $this->respondNotFound();
+        }
+
+        $role->load('permissions', 'modules');
+
+        // Provide view with modules, sidebarModules and rolePermissions used by the blade
+        $modules = Module::all();
+        $sidebarModules = $role->modules->pluck('id')->toArray();
+        $rolePermissions = $role->permissions->pluck('name')->toArray();
+
+        return view('roles.show', compact('role', 'modules', 'sidebarModules', 'rolePermissions'));
     }
 
     public function create()
@@ -40,13 +58,13 @@ class RoleController extends Controller
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'status' => true,
-                'message' => 'تم إضافة الدور بنجاح',
+                'message' => __('The role has been added successfully'),
                 'role' => $role->load('permissions')
             ]);
         }
         return redirect()->route('roles.index')
-            ->with('success', 'تم إضافة الدور بنجاح')
-            ->with('swal_title', 'إضافة دور جديد');
+            ->with('success', __('The role has been added successfully'))
+            ->with('swal_title', __('Success'));
     }
 
     public function edit($id)
@@ -67,27 +85,54 @@ class RoleController extends Controller
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'status' => true,
-                'message' => 'تم تحديث الدور بنجاح',
+                'message' => __('The role has been updated successfully'),
                 'role' => $role->load('permissions')
             ]);
         }
-        return redirect()->route('roles.index')->with('success', 'تم تحديث الدور بنجاح')->with('swal_title', 'تم تحديث الدور بنجاح');
+        return redirect()->route('roles.index')->with('success', __('The role has been updated successfully'))->with('swal_title', __('Success'));
     }
 
     public function destroy($id)
     {
-        $this->roleService->deleteRole($id);
-
-        if (request()->ajax() || request()->wantsJson()) {
-            return response()->json([
-                'status' => true,
-                'message' => 'تم حذف الدور بنجاح'
-            ]);
+        $role = $this->roleService->findRole((int) $id);
+        if (! $role) {
+            return $this->respondNotFound();
         }
-        return redirect()->route('roles.index')
-            ->with('success', 'تم حذف الدور بنجاح')
-            ->with('swal_title', 'تم حذف الدور بنجاح');
+
+        if ($this->roleService->roleHasUsers((int) $id)) {
+            return $this->respondCannotDelete();
+        }
+
+        $this->roleService->deleteRole((int) $id);
+
+        return $this->respondSuccess(__('The role has been deleted successfully'));
     }
+
+    protected function respondNotFound()
+    {
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json(['status' => false, 'message' => __('Role not found')], 404);
+        }
+        return redirect()->route('roles.index')->with('error', __('Role not found'))->with('swal_title', __('Error'));
+    }
+
+    protected function respondCannotDelete()
+    {
+        $msg = __('This role cannot be deleted because it is assigned to users');
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json(['status' => false, 'message' => $msg], 400);
+        }
+        return redirect()->route('roles.index')->with('error', $msg)->with('swal_title', __('Error'));
+    }
+
+    protected function respondSuccess(string $message)
+    {
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json(['status' => true, 'message' => $message]);
+        }
+        return redirect()->route('roles.index')->with('success', $message)->with('swal_title', __('Success'));
+    }
+
 
     public function search(Request $request)
     {

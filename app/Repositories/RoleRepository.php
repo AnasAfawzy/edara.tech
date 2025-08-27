@@ -17,9 +17,26 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
         parent::__construct($model);
     }
 
+    protected function trackedKeysKey(): string
+    {
+        return $this->cachePrefix . 'keys';
+    }
+
+    protected function addCacheKey(string $key): void
+    {
+        // keep a list of keys we create so we can clear them for non-redis stores
+        $trackedKey = $this->trackedKeysKey();
+        $keys = Cache::get($trackedKey, []);
+        if (!in_array($key, $keys, true)) {
+            $keys[] = $key;
+            Cache::forever($trackedKey, $keys);
+        }
+    }
+
     public function all(): Collection
     {
         $cacheKey = $this->cachePrefix . 'all';
+        $this->addCacheKey($cacheKey);
         return Cache::remember($cacheKey, 300, function () {
             return $this->model->all();
         });
@@ -28,6 +45,7 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
     public function find(int $id): Model
     {
         $cacheKey = $this->cachePrefix . 'find_' . $id;
+        $this->addCacheKey($cacheKey);
         return Cache::remember($cacheKey, 300, function () use ($id) {
             return $this->model->find($id);
         });
@@ -41,11 +59,9 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
     public function create(array $data): Model
     {
         $role = $this->model->create(['name' => $data['name']]);
-        // ربط الصلاحيات إذا وجدت
         if (isset($data['permissions'])) {
             $role->syncPermissions($data['permissions']);
         }
-        // ربط الموديولات إذا وجدت
         if (isset($data['sidebar_modules'])) {
             $role->modules()->sync($data['sidebar_modules']);
         }
@@ -58,13 +74,11 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
         $role = $this->model->find($id);
         if ($role) {
             $role->update(['name' => $data['name']]);
-            // تحديث الصلاحيات
             if (isset($data['permissions'])) {
                 $role->syncPermissions($data['permissions']);
             } else {
                 $role->syncPermissions([]);
             }
-            // تحديث الموديولات
             if (isset($data['sidebar_modules'])) {
                 $role->modules()->sync($data['sidebar_modules']);
             } else {
@@ -91,6 +105,8 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
     public function paginateWithPermissions(int $perPage, string $search = '')
     {
         $cacheKey = $this->cachePrefix . "paginate_{$perPage}_" . md5($search);
+        $this->addCacheKey($cacheKey);
+
         return Cache::remember($cacheKey, 300, function () use ($perPage, $search) {
             $query = $this->model->with('permissions');
             if ($search) {
@@ -102,17 +118,35 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
 
     protected function clearRolesCache()
     {
-        // لمسح كل الكاش الخاص بالأدوار فقط (يدعم redis)
+        // If Redis store available try to remove by pattern
         if (Cache::getStore() instanceof \Illuminate\Cache\RedisStore) {
-            $redis = Cache::getRedis();
-            $keys = $redis->keys(config('cache.prefix') . ':' . $this->cachePrefix . '*');
-            foreach ($keys as $key) {
-                $redis->del($key);
+            try {
+                $redis = Cache::getRedis();
+                $prefix = config('cache.prefix') ? config('cache.prefix') . ':' : '';
+                $keys = $redis->keys($prefix . $this->cachePrefix . '*');
+                foreach ($keys as $key) {
+                    $redis->del($key);
+                }
+            } catch (\Throwable $e) {
+                // fallback to removing tracked keys
+                $this->clearTrackedKeys();
             }
-        } else {
-            // في حالة file cache أو غيره، خزّن كل المفاتيح في مصفوفة وامسحها هنا
-            Cache::forget($this->cachePrefix . 'all');
-            // لا يمكن حذف كل المفاتيح دفعة واحدة في file cache، يمكنك استخدام مكتبة spatie/laravel-responsecache أو حل مخصص
+            return;
         }
+
+        // For file / array / other stores: use the tracked keys list and delete them
+        $this->clearTrackedKeys();
+    }
+
+    protected function clearTrackedKeys()
+    {
+        $trackedKey = $this->trackedKeysKey();
+        $keys = Cache::get($trackedKey, []);
+        foreach ($keys as $k) {
+            Cache::forget($k);
+        }
+        // also forget the 'all' key and the tracked keys index
+        Cache::forget($this->cachePrefix . 'all');
+        Cache::forget($trackedKey);
     }
 }
