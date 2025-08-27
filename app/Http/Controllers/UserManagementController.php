@@ -2,21 +2,44 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use Spatie\Permission\Models\Role;
+use App\Repositories\RoleRepository;
+use App\Services\UserService;
+use App\Models\Role;
 use Illuminate\Http\Request;
 
 class UserManagementController extends Controller
 {
-    public function index()
+    protected $userService;
+    protected $roleRepository;
+
+    public function __construct(UserService $userService, RoleRepository $roleRepository)
     {
-        $users = User::with('roles')->get();
-        return view('users.index', compact('users'));
+        $this->userService = $userService;
+        $this->roleRepository = $roleRepository;
+    }
+
+    public function index(Request $request)
+    {
+        $perPage = $request->get('perPage', 10);
+        $search = $request->get('search', '');
+
+        $users = $this->userService->paginateWithRoles($perPage, $search);
+
+        // if ($request->ajax()) {
+        //     $html = view('users.partials.table', compact('users'))->render();
+        //     $pagination = $users->appends($request->all())->links()->render();
+        //     return response()->json([
+        //         'html' => $html,
+        //         'pagination' => $pagination
+        //     ]);
+        // }
+        $roles = Role::all();
+        return view('users.index', compact('users', 'perPage', 'search', 'roles'));
     }
 
     public function create()
     {
-        $roles = Role::all();
+        $roles = $this->roleRepository->all();
         return view('users.create', compact('roles'));
     }
 
@@ -25,44 +48,99 @@ class UserManagementController extends Controller
         $data = $request->validate([
             'name' => 'required',
             'email' => 'required|email|unique:users',
-            'password' => 'required|confirmed',
-            'roles' => 'array'
+            'password' => 'required',
+            'roles' => 'required|string'
         ]);
-        $user = User::create([
+        $user = $this->userService->createUser([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => bcrypt($data['password']),
         ]);
-        $user->syncRoles($data['roles'] ?? []);
-        return redirect()->route('users.index')->with('success', 'تم إضافة المستخدم');
+        $user->syncRoles([$data['roles']]);
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('تم إضافة المستخدم بنجاح'),
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'roles' => implode(', ', $user->getRoleNames()->toArray()),
+                ]
+            ]);
+        }
+        return redirect()->route('users.index')->with('success', __('User added successfully'));
     }
 
-    public function edit(User $user)
+
+    public function edit($id)
     {
-        $roles = Role::all();
-        return view('users.edit', compact('user', 'roles'));
+        $user = $this->userService->findUser($id);
+        $role = $user->roles->pluck('name')->first(); // اسم واحد فقط
+        if (request()->ajax()) {
+            return response()->json([
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'roles' => $role, // اسم واحد فقط
+            ]);
+        }
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request, $id)
     {
         $data = $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'password' => 'nullable|confirmed',
-            'roles' => 'array'
+            'email' => 'required|email|unique:users,email,' . $id,
+            'password' => 'nullable',
+            'roles' => 'required|string'
         ]);
-        $user->update([
+        $updateData = [
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => $data['password'] ? bcrypt($data['password']) : $user->password,
-        ]);
-        $user->syncRoles($data['roles'] ?? []);
-        return redirect()->route('users.index')->with('success', 'تم تحديث المستخدم');
+        ];
+        if (!empty($data['password'])) {
+            $updateData['password'] = bcrypt($data['password']);
+        }
+        $user = $this->userService->updateUser($id, $updateData);
+        $user->syncRoles([$data['roles']]);
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('تم تحديث المستخدم بنجاح'),
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'roles' => implode(', ', $user->getRoleNames()->toArray()),
+                ]
+            ]);
+        }
+        return redirect()->route('users.index')->with('success', __('User updated successfully'));
     }
 
-    public function destroy(User $user)
+    public function destroy(Request $request, $id)
     {
-        $user->delete();
-        return redirect()->route('users.index')->with('success', 'تم حذف المستخدم');
+        $this->userService->deleteUser($id);
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('تم حذف المستخدم بنجاح'),
+                'user_id' => $id
+            ]);
+        }
+        return redirect()->route('users.index')->with('success', __('User deleted successfully'));
+    }
+
+    public function search(Request $request)
+    {
+        $search = $request->get('search', '');
+        $perPage = $request->get('perPage', 10);
+        $users = $this->userService->searchUsers($search, $perPage);
+
+        $view = view('users.partials.table', compact('users'))->render();
+        $pagination = $users->appends($request->all())->links()->render();
+
+        return response()->json(['html' => $view, 'pagination' => $pagination]);
     }
 }

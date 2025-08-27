@@ -41,6 +41,7 @@ class DatabaseSeeder extends Seeder
         //     JournalEntrySeeder::class,
         //     JournalEntryTestSeeder::class,
         //     BankSeeder::class,
+        // FinancialYearPermissionsSeeder::class,
         // ]);
     }
 }

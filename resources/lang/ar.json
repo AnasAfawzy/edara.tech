@@ -190,6 +190,7 @@
     "Search for role...": "بحث عن دور...",
     "Add Role": "إضافة دور",
     "Role": "دور",
+    "Edit Role": "تعديل دور",
     "Permissions": "الصلاحيات",
     "There are no roles": "لا توجد أدوار",
     "The role has been added successfully": "تم إضافة الدور بنجاح",
@@ -204,5 +205,10 @@
     "Create": "إضافة",
     "All": "الكل",
     "Users": "المستخدمين",
-    "Role View": "عرض الدور"
+    "Role View": "عرض الدور",
+    "User Name": "اسم المستخدم",
+    "Email": "البريد الإلكتروني",
+    "Search for user...": "البحث عن مستخدم...",
+    "Add User": "إضافة مستخدم",
+    "Financial Years": "السنوات المالية"
 }

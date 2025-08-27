@@ -28,12 +28,12 @@ class SidebarServiceProvider extends ServiceProvider
             $mainModules = collect();
 
             if ($user) {
-                $user->load(['roles.modules']);
+                $user->loadMissing(['roles.modules']);
                 $userRole = $user->roles->first();
 
                 if ($userRole) {
                     $cacheKey = "role_main_modules_{$userRole->id}";
-                    $mainModules = Cache::remember($cacheKey, 60, function () use ($userRole) {
+                    $mainModules = Cache::remember($cacheKey, 1, function () use ($userRole) {
                         return $userRole->modules()
                             ->whereNull('parent_id')
                             ->with('children')

@@ -12,6 +12,7 @@ use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CashVaultController;
 use App\Http\Controllers\CostCenterController;
 use App\Http\Controllers\JournalEntryController;
+use App\Http\Controllers\FinancialYearController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\AccountingSettingsController;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
@@ -61,10 +62,19 @@ Route::group(
             Route::get('/export/csv', [CurrencyController::class, 'exportCsv'])->name('export.csv');
             Route::get('/export/pdf', [CurrencyController::class, 'exportPdf'])->name('export.pdf');
         });
-        Route::resource('users', UserManagementController::class);
+        Route::get('users/search', [UserManagementController::class, 'search'])->name('users.search');
+        Route::resource('users', UserManagementController::class)->except(['show']);
         Route::get('roles/search', [RoleController::class, 'search'])->name('roles.search');
 
         Route::resource('roles', RoleController::class);
+
+
+
+        Route::resource('financial-years', FinancialYearController::class);
+        Route::post('financial-years/{financialYear}/activate', [FinancialYearController::class, 'activate'])->name('financial-years.activate');
+        Route::post('financial-years/{financialYear}/close', [FinancialYearController::class, 'close'])->name('financial-years.close');
+
+
 
         Route::get('/dashboard', function () {
             return view('dashboard');

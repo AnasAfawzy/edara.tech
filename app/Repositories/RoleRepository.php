@@ -3,10 +3,12 @@
 namespace App\Repositories;
 
 use App\Models\Role;
-use App\Repositories\Interfaces\RoleRepositoryInterface;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Models\Permission;
+use Illuminate\Database\Eloquent\Collection;
+use App\Repositories\Interfaces\RoleRepositoryInterface;
 
 class RoleRepository extends BaseRepository implements RoleRepositoryInterface
 {
@@ -24,7 +26,6 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
 
     protected function addCacheKey(string $key): void
     {
-        // keep a list of keys we create so we can clear them for non-redis stores
         $trackedKey = $this->trackedKeysKey();
         $keys = Cache::get($trackedKey, []);
         if (!in_array($key, $keys, true)) {
@@ -37,18 +38,14 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
     {
         $cacheKey = $this->cachePrefix . 'all';
         $this->addCacheKey($cacheKey);
-        return Cache::remember($cacheKey, 300, function () {
-            return $this->model->all();
-        });
+        return Cache::remember($cacheKey, 300, fn() => $this->model->all());
     }
 
     public function find(int $id): Model
     {
         $cacheKey = $this->cachePrefix . 'find_' . $id;
         $this->addCacheKey($cacheKey);
-        return Cache::remember($cacheKey, 300, function () use ($id) {
-            return $this->model->find($id);
-        });
+        return Cache::remember($cacheKey, 300, fn() => $this->model->find($id));
     }
 
     public function getModel(): Model
@@ -58,35 +55,55 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
 
     public function create(array $data): Model
     {
-        $role = $this->model->create(['name' => $data['name']]);
-        if (isset($data['permissions'])) {
-            $role->syncPermissions($data['permissions']);
+        DB::beginTransaction();
+        try {
+            $role = $this->model->create(['name' => $data['name']]);
+
+            // التأكد من وجود الصلاحيات وإنشائها إذا لم تكن موجودة
+            if (isset($data['permissions']) && is_array($data['permissions'])) {
+                $permissions = $this->ensurePermissionsExist($data['permissions']);
+                $role->syncPermissions($permissions);
+            }
+
+            if (isset($data['sidebar_modules']) && is_array($data['sidebar_modules'])) {
+                $role->modules()->sync($data['sidebar_modules']);
+            }
+
+            $this->clearRolesCache($role->id);
+            DB::commit();
+            return $role;
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw $e;
         }
-        if (isset($data['sidebar_modules'])) {
-            $role->modules()->sync($data['sidebar_modules']);
-        }
-        $this->clearRolesCache();
-        return $role;
     }
 
     public function update(int $id, array $data): ?Model
     {
-        $role = $this->model->find($id);
-        if ($role) {
-            $role->update(['name' => $data['name']]);
-            if (isset($data['permissions'])) {
-                $role->syncPermissions($data['permissions']);
-            } else {
-                $role->syncPermissions([]);
+        DB::beginTransaction();
+        try {
+            $role = $this->model->find($id);
+            if ($role) {
+                $role->update(['name' => $data['name']]);
+
+                // التأكد من وجود الصلاحيات وإنشائها إذا لم تكن موجودة
+                if (isset($data['permissions']) && is_array($data['permissions'])) {
+                    $permissions = $this->ensurePermissionsExist($data['permissions']);
+                    $role->syncPermissions($permissions);
+                } else {
+                    $role->syncPermissions([]);
+                }
+
+                $role->modules()->sync($data['sidebar_modules'] ?? []);
+                Cache::forget("role_main_modules_{$role->id}");
+                $this->clearRolesCache($role->id);
             }
-            if (isset($data['sidebar_modules'])) {
-                $role->modules()->sync($data['sidebar_modules']);
-            } else {
-                $role->modules()->sync([]);
-            }
-            $this->clearRolesCache();
+            DB::commit();
+            return $role;
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw $e;
         }
-        return $role;
     }
 
     public function delete(int $id): bool
@@ -95,7 +112,7 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
         if ($role) {
             $deleted = $role->delete();
             if ($deleted) {
-                $this->clearRolesCache();
+                $this->clearRolesCache($id);
             }
             return $deleted;
         }
@@ -106,7 +123,6 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
     {
         $cacheKey = $this->cachePrefix . "paginate_{$perPage}_" . md5($search);
         $this->addCacheKey($cacheKey);
-
         return Cache::remember($cacheKey, 300, function () use ($perPage, $search) {
             $query = $this->model->with('permissions');
             if ($search) {
@@ -116,9 +132,32 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
         });
     }
 
-    protected function clearRolesCache()
+    protected function clearRolesCache(?int $roleId = null)
     {
-        // If Redis store available try to remove by pattern
+        // مسح الكاش العام للـ roles
+        $this->clearTrackedKeys();
+
+        // مسح كاش FileStore بشكل آمن
+        if (Cache::getStore() instanceof \Illuminate\Cache\FileStore) {
+            $store = Cache::getStore();
+            $cacheDirectory = $store->getDirectory();
+            $files = glob($cacheDirectory . '/*');
+            foreach ($files as $file) {
+                // تحقق من صلاحية الملف قبل محاولة قراءته أو حذفه
+                if (!is_readable($file) || !is_writable($file)) {
+                    continue;
+                }
+                $base = basename($file);
+                if (
+                    strpos($base, $this->cachePrefix) === 0 ||
+                    ($roleId && strpos($base, "role_main_modules_{$roleId}") !== false)
+                ) {
+                    @unlink($file);
+                }
+            }
+        }
+
+        // مسح كاش Redis
         if (Cache::getStore() instanceof \Illuminate\Cache\RedisStore) {
             try {
                 $redis = Cache::getRedis();
@@ -127,15 +166,13 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
                 foreach ($keys as $key) {
                     $redis->del($key);
                 }
+                if ($roleId) {
+                    $redis->del($prefix . "role_main_modules_{$roleId}");
+                }
             } catch (\Throwable $e) {
-                // fallback to removing tracked keys
                 $this->clearTrackedKeys();
             }
-            return;
         }
-
-        // For file / array / other stores: use the tracked keys list and delete them
-        $this->clearTrackedKeys();
     }
 
     protected function clearTrackedKeys()
@@ -145,8 +182,31 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
         foreach ($keys as $k) {
             Cache::forget($k);
         }
-        // also forget the 'all' key and the tracked keys index
         Cache::forget($this->cachePrefix . 'all');
         Cache::forget($trackedKey);
+    }
+
+    protected function ensurePermissionsExist(array $permissionNames): array
+    {
+        $permissions = [];
+
+        foreach ($permissionNames as $permissionName) {
+            // محاولة العثور على الصلاحية أولاً
+            $permission = Permission::where('name', $permissionName)
+                ->where('guard_name', 'web')
+                ->first();
+
+            // إذا لم توجد، قم بإنشائها
+            if (!$permission) {
+                $permission = Permission::create([
+                    'name' => $permissionName,
+                    'guard_name' => 'web'
+                ]);
+            }
+
+            $permissions[] = $permission;
+        }
+
+        return $permissions;
     }
 }
