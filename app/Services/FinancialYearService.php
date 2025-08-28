@@ -2,188 +2,142 @@
 
 namespace App\Services;
 
-use App\Repositories\Interfaces\FinancialYearRepositoryInterface;
-use App\Models\FinancialYear;
-use Illuminate\Database\Eloquent\Collection;
-use Carbon\Carbon;
+use App\Repositories\FinancialYearRepository;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
-class FinancialYearService
+class FinancialYearService extends BaseService
 {
-    protected $financialYearRepository;
+    protected $repository;
 
-    public function __construct(FinancialYearRepositoryInterface $financialYearRepository)
+    public function __construct(FinancialYearRepository $repository)
     {
-        $this->financialYearRepository = $financialYearRepository;
+        parent::__construct($repository);
+        $this->repository = $repository;
     }
 
-    public function getAllFinancialYears(): Collection
+    public function getAllFinancialYears()
     {
-        return $this->financialYearRepository->all();
+        return $this->repository->all();
     }
 
-    public function getFinancialYear(int $id): ?FinancialYear
+    public function getFinancialYear(int $id)
     {
-        return $this->financialYearRepository->find($id);
+        return $this->repository->find($id);
     }
 
-    public function createFinancialYear(array $data): array
+    public function createFinancialYear(array $data)
     {
-        // التحقق من صحة البيانات
-        $validation = $this->validateFinancialYearData($data);
-        if (!$validation['success']) {
-            return $validation;
+        try {
+            return DB::transaction(function () use ($data) {
+                // التحقق من التداخل
+                if ($this->repository->checkOverlapping($data['start_date'], $data['end_date'])) {
+                    throw new \Exception('تواريخ السنة المالية تتداخل مع سنة مالية موجودة');
+                }
+
+                $financialYear = $this->repository->create($data);
+
+                if (!$financialYear || !$financialYear->id) {
+                    throw new \Exception('فشل في إنشاء السنة المالية');
+                }
+
+                return $financialYear;
+            });
+        } catch (\Exception $e) {
+            Log::error("Error creating financial year: " . $e->getMessage());
+            throw $e;
         }
-
-        // التحقق من التداخل
-        if ($this->financialYearRepository->checkOverlapping($data['start_date'], $data['end_date'])) {
-            return [
-                'success' => false,
-                'message' => 'تواريخ السنة المالية تتداخل مع سنة مالية موجودة'
-            ];
-        }
-
-        $financialYear = $this->financialYearRepository->create($data);
-
-        return [
-            'success' => true,
-            'data' => $financialYear,
-            'message' => 'تم إنشاء السنة المالية بنجاح'
-        ];
     }
 
-    public function updateFinancialYear(int $id, array $data): array
+    public function updateFinancialYear(int $id, array $data)
     {
-        $financialYear = $this->financialYearRepository->find($id);
+        try {
+            return DB::transaction(function () use ($id, $data) {
+                $financialYear = $this->repository->find($id);
+
+                if (!$financialYear) {
+                    throw new \Exception('السنة المالية غير موجودة');
+                }
+
+                if ($financialYear->is_closed) {
+                    throw new \Exception('لا يمكن تعديل سنة مالية مغلقة');
+                }
+
+                // التحقق من التداخل (باستثناء السنة المالية الحالية)
+                if ($this->repository->checkOverlapping($data['start_date'], $data['end_date'], $id)) {
+                    throw new \Exception('تواريخ السنة المالية تتداخل مع سنة مالية موجودة');
+                }
+
+                $updatedYear = $this->repository->update($id, $data);
+
+                if (!$updatedYear) {
+                    throw new \Exception('فشل في تحديث السنة المالية');
+                }
+
+                return $updatedYear;
+            });
+        } catch (\Exception $e) {
+            Log::error("Error updating financial year: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function deleteFinancialYear($id): bool
+    {
+        $financialYear = $this->repository->find($id);
+
         if (!$financialYear) {
-            return [
-                'success' => false,
-                'message' => 'السنة المالية غير موجودة'
-            ];
+            throw new \Exception('السنة المالية غير موجودة');
         }
 
-        // التحقق من صحة البيانات
-        $validation = $this->validateFinancialYearData($data);
-        if (!$validation['success']) {
-            return $validation;
-        }
-
-        // التحقق من التداخل (باستثناء السنة المالية الحالية)
-        if ($this->financialYearRepository->checkOverlapping($data['start_date'], $data['end_date'], $id)) {
-            return [
-                'success' => false,
-                'message' => 'تواريخ السنة المالية تتداخل مع سنة مالية موجودة'
-            ];
-        }
-
-        $updated = $this->financialYearRepository->update($id, $data);
-
-        return [
-            'success' => $updated,
-            'message' => $updated ? 'تم تحديث السنة المالية بنجاح' : 'فشل في تحديث السنة المالية'
-        ];
-    }
-
-    public function activateFinancialYear(int $id): array
-    {
-        $financialYear = $this->financialYearRepository->find($id);
-        if (!$financialYear) {
-            return [
-                'success' => false,
-                'message' => 'السنة المالية غير موجودة'
-            ];
+        if ($financialYear->is_active) {
+            throw new \Exception('لا يمكن حذف السنة المالية النشطة');
         }
 
         if ($financialYear->is_closed) {
-            return [
-                'success' => false,
-                'message' => 'لا يمكن تفعيل سنة مالية مغلقة'
-            ];
+            throw new \Exception('لا يمكن حذف السنة المالية المغلقة');
         }
 
-        $activated = $this->financialYearRepository->activate($id);
+        // التحقق من وجود بيانات مرتبطة
+        if ($financialYear->journalEntries()->exists()) {
+            throw new \Exception('لا يمكن حذف السنة المالية لوجود قيود محاسبية مرتبطة بها');
+        }
 
-        return [
-            'success' => $activated,
-            'message' => $activated ? 'تم تفعيل السنة المالية بنجاح' : 'فشل في تفعيل السنة المالية'
-        ];
+        return $this->repository->delete($id);
     }
 
-    public function closeFinancialYear(int $id): array
+    public function activateFinancialYear(int $id)
     {
-        $financialYear = $this->financialYearRepository->find($id);
+        $financialYear = $this->repository->find($id);
+
         if (!$financialYear) {
-            return [
-                'success' => false,
-                'message' => 'السنة المالية غير موجودة'
-            ];
+            throw new \Exception('السنة المالية غير موجودة');
         }
 
         if ($financialYear->is_closed) {
-            return [
-                'success' => false,
-                'message' => 'السنة المالية مغلقة بالفعل'
-            ];
+            throw new \Exception('لا يمكن تفعيل سنة مالية مغلقة');
         }
 
-        $closed = $this->financialYearRepository->close($id);
-
-        return [
-            'success' => $closed,
-            'message' => $closed ? 'تم إغلاق السنة المالية بنجاح' : 'فشل في إغلاق السنة المالية'
-        ];
+        return $this->repository->activate($id);
     }
 
-    public function getActiveFinancialYear(): ?FinancialYear
+    public function closeFinancialYear(int $id)
     {
-        return $this->financialYearRepository->getActive();
-    }
+        $financialYear = $this->repository->find($id);
 
-    public function getFinancialYearByDate(string $date): ?FinancialYear
-    {
-        return $this->financialYearRepository->getByDate($date);
-    }
-
-    public function assignFinancialYearId($date = null): ?int
-    {
-        $date = $date ? Carbon::parse($date) : now();
-
-        // محاولة العثور على السنة المالية بناءً على التاريخ
-        $financialYear = $this->getFinancialYearByDate($date);
-
-        // إذا لم توجد، استخدم السنة المالية النشطة
         if (!$financialYear) {
-            $financialYear = $this->getActiveFinancialYear();
+            throw new \Exception('السنة المالية غير موجودة');
         }
 
-        return $financialYear ? $financialYear->id : null;
+        if ($financialYear->is_closed) {
+            throw new \Exception('السنة المالية مغلقة بالفعل');
+        }
+
+        return $this->repository->close($id);
     }
 
-    private function validateFinancialYearData(array $data): array
+    public function searchFinancialYears($search = '', $perPage = 10)
     {
-        if (empty($data['name'])) {
-            return [
-                'success' => false,
-                'message' => 'اسم السنة المالية مطلوب'
-            ];
-        }
-
-        if (empty($data['start_date']) || empty($data['end_date'])) {
-            return [
-                'success' => false,
-                'message' => 'تاريخ البداية والنهاية مطلوبان'
-            ];
-        }
-
-        $startDate = Carbon::parse($data['start_date']);
-        $endDate = Carbon::parse($data['end_date']);
-
-        if ($endDate->lte($startDate)) {
-            return [
-                'success' => false,
-                'message' => 'تاريخ النهاية يجب أن يكون بعد تاريخ البداية'
-            ];
-        }
-
-        return ['success' => true];
+        return $this->repository->searchFinancialYears($search, $perPage);
     }
 }

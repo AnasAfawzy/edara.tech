@@ -9,9 +9,15 @@ class JournalEntryDetail extends Model
     protected $fillable = [
         'journal_entry_id',
         'account_id',
+        'statement',
         'debit',
         'credit',
-        'cost_center'
+        'cost_center_id' // غيرت من cost_center إلى cost_center_id
+    ];
+
+    protected $casts = [
+        'debit' => 'decimal:2',
+        'credit' => 'decimal:2',
     ];
 
     public function journalEntry()
@@ -24,8 +30,20 @@ class JournalEntryDetail extends Model
         return $this->belongsTo(Account::class);
     }
 
-    public function bank()
+    public function costCenter()
     {
-        return $this->belongsTo(Bank::class, 'account_id');
+        return $this->belongsTo(CostCenter::class);
+    }
+
+    // Accessor للحصول على المبلغ (مدين أو دائن)
+    public function getAmountAttribute()
+    {
+        return $this->debit > 0 ? $this->debit : $this->credit;
+    }
+
+    // Accessor لتحديد نوع العملية
+    public function getTypeAttribute()
+    {
+        return $this->debit > 0 ? 'debit' : 'credit';
     }
 }

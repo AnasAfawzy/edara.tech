@@ -39,6 +39,8 @@ Route::group(
         Route::get('cost-centers/tree/data', [CostCenterController::class, 'treeData'])->name('cost-centers.tree.data');
 
         Route::resource('cost-centers', CostCenterController::class);
+        Route::get('journal-entries/search', [JournalEntryController::class, 'search'])->name('journal-entries.search');
+
         Route::resource('journal-entries', JournalEntryController::class);
         Route::resource('cash-vaults', CashVaultController::class);
         Route::resource('banks', BankController::class);
@@ -70,9 +72,10 @@ Route::group(
 
 
 
-        Route::resource('financial-years', FinancialYearController::class);
-        Route::post('financial-years/{financialYear}/activate', [FinancialYearController::class, 'activate'])->name('financial-years.activate');
-        Route::post('financial-years/{financialYear}/close', [FinancialYearController::class, 'close'])->name('financial-years.close');
+        Route::resource('financial-years', FinancialYearController::class)->except(['show', 'create']);
+        Route::post('financial-years/{id}/activate', [FinancialYearController::class, 'activate'])->name('financial-years.activate');
+        Route::post('financial-years/{id}/close', [FinancialYearController::class, 'close'])->name('financial-years.close');
+        Route::get('financial-years/search', [FinancialYearController::class, 'search'])->name('financial-years.search');
 
 
 

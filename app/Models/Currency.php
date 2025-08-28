@@ -21,4 +21,6 @@ class Currency extends Model
     {
         return $this->hasMany(JournalEntry::class, 'currency_id');
     }
+
+
 }

@@ -20,17 +20,17 @@ class FinancialYearRepository extends BaseRepository implements FinancialYearRep
         return $this->model->orderBy('start_date', 'desc')->get();
     }
 
-    public function find(int $id): FinancialYear
+    public function find(int $id): Model
     {
         return $this->model->find($id);
     }
 
-    public function create(array $data): FinancialYear
+    public function create(array $data): Model
     {
         return $this->model->create($data);
     }
 
-    public function update(int $id, array $data): ?FinancialYear
+    public function update(int $id, array $data): ?Model
     {
         $financialYear = $this->find($id);
         if (!$financialYear) return null;
@@ -90,5 +90,15 @@ class FinancialYearRepository extends BaseRepository implements FinancialYearRep
         }
 
         return $query->exists();
+    }
+
+    public function searchFinancialYears($search = '', $perPage = 10)
+    {
+        return $this->model
+            ->when($search, function ($q) use ($search) {
+                $q->where('name', 'like', "%$search%");
+            })
+            ->orderBy('start_date', 'desc')
+            ->paginate($perPage);
     }
 }

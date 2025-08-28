@@ -2,19 +2,58 @@
 
 namespace App\Helpers;
 
-use App\Services\FinancialYearService;
+use App\Models\FinancialYear;
+use Carbon\Carbon;
 
 class FinancialYearHelper
 {
-    public static function getActiveFinancialYear()
+    /**
+     * تحديد السنة المالية بناءً على التاريخ
+     */
+    public static function assignFinancialYear($date): ?int
     {
-        $service = app(FinancialYearService::class);
-        return $service->getActiveFinancialYear();
+        $date = Carbon::parse($date);
+
+        // البحث عن السنة المالية التي تحتوي على هذا التاريخ
+        $financialYear = FinancialYear::where('start_date', '<=', $date)
+            ->where('end_date', '>=', $date)
+            ->first();
+
+        // إذا لم توجد سنة مالية مناسبة، استخدم السنة النشطة
+        if (!$financialYear) {
+            $financialYear = FinancialYear::getActive();
+        }
+
+        return $financialYear ? $financialYear->id : null;
     }
 
-    public static function assignFinancialYear($date = null)
+    /**
+     * الحصول على السنة المالية النشطة
+     */
+    public static function getActiveFinancialYear(): ?FinancialYear
     {
-        $service = app(FinancialYearService::class);
-        return $service->assignFinancialYearId($date);
+        return FinancialYear::getActive();
+    }
+
+    /**
+     * التحقق من أن التاريخ ضمن سنة مالية نشطة
+     */
+    public static function isDateInActiveYear($date): bool
+    {
+        $activeYear = self::getActiveFinancialYear();
+
+        if (!$activeYear) {
+            return false;
+        }
+
+        return $activeYear->containsDate($date);
+    }
+
+    /**
+     * الحصول على السنة المالية بناءً على التاريخ
+     */
+    public static function getFinancialYearByDate($date): ?FinancialYear
+    {
+        return FinancialYear::getByDate($date);
     }
 }
