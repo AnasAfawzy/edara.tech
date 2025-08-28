@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Helpers\FinancialYearHelper;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Auth;
 
 class JournalEntry extends Model
 {
@@ -16,6 +18,10 @@ class JournalEntry extends Model
         'entry_number',
         'source_type',
         'source_id',
+        'reverses_entry_id',
+        'reversed_by_entry_id',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
@@ -47,6 +53,34 @@ class JournalEntry extends Model
         return $this->belongsTo(FinancialYear::class);
     }
 
+    public function reversingEntry()
+    {
+        return $this->belongsTo(JournalEntry::class, 'reverses_entry_id');
+    }
+
+    public function originalEntry()
+    {
+        return $this->hasOne(JournalEntry::class, 'reversed_by_entry_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Get all of the attachments for the journal entry.
+     */
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
     // التحقق من كون القيد يدوي
     public function isManual(): bool
     {
@@ -70,6 +104,9 @@ class JournalEntry extends Model
         parent::boot();
 
         static::creating(function ($journalEntry) {
+            if (Auth::check()) {
+                $journalEntry->created_by = Auth::id();
+            }
             // تحديد السنة المالية إذا لم تكن محددة
             if (!$journalEntry->financial_year_id) {
                 $journalEntry->financial_year_id = FinancialYearHelper::assignFinancialYear($journalEntry->entry_date);
@@ -83,6 +120,12 @@ class JournalEntry extends Model
             // تحديد معرف المصدر إذا لم يكن محدد
             if ($journalEntry->source_id === null) {
                 $journalEntry->source_id = 0;
+            }
+        });
+
+        static::updating(function ($journalEntry) {
+            if (Auth::check()) {
+                $journalEntry->updated_by = Auth::id();
             }
         });
     }

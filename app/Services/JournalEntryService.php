@@ -17,9 +17,9 @@ class JournalEntryService
         $this->repository = $repository;
     }
 
-    public function getAllEntries(): Collection
+    public function getAllEntries(int $perPage = 25): LengthAwarePaginator
     {
-        return $this->repository->allWithDetails();
+        return $this->repository->allWithDetailsPaginated($perPage);
     }
 
     public function getEntryWithDetails($id)
@@ -131,7 +131,7 @@ class JournalEntryService
                 'debit' => floatval($detail['debit'] ?? 0),
                 'credit' => floatval($detail['credit'] ?? 0),
                 'cost_center_id' => !empty($detail['cost_center_id']) ? $detail['cost_center_id'] : null,
-                'statement' => $detail['statement'] ?? null, 
+                'statement' => $detail['statement'] ?? null,
             ];
 
             // التأكد من وجود مبلغ

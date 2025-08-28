@@ -150,15 +150,13 @@
             <!-- / Layout page -->
         </div>
     </div>
-    <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script>
+        <script src="{{ asset('assets\/js\/jquery-3.7.1.min.js') }}"></script>
 
     @yield('scripts')
     @stack('scripts')
 
     <!-- Core JS -->
     <!-- build:js assets/vendor/js/theme.js -->
-
-    <script src="{{ asset('assets/vendor/libs/jquery/jquery.js') }}"></script>
 
     <script src="{{ asset('assets/vendor/libs/popper/popper.js') }}"></script>
     <script src="{{ asset('assets/vendor/js/bootstrap.js') }}"></script>

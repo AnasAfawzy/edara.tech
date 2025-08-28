@@ -26,6 +26,14 @@
                                         ({{ $journalEntry->currency->code ?? 'N/A' }})</span>
                                 </td>
                             </tr>
+                            <tr>
+                                <td><strong>{{ __('Created By') }}:</strong></td>
+                                <td>{{ $journalEntry->creator->name ?? 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>{{ __('Last Updated By') }}:</strong></td>
+                                <td>{{ $journalEntry->updater->name ?? 'N/A' }}</td>
+                            </tr>
                         </table>
                     </div>
                     <div class="col-md-6">
@@ -43,9 +51,26 @@
                                     </span>
                                 </td>
                             </tr>
+                            @if($journalEntry->reverses_entry_id)
+                                <tr>
+                                    <td><strong>{{ __('Reversal of Entry') }}:</strong></td>
+                                    <td><a href="{{ route('journal-entries.show', $journalEntry->reverses_entry_id) }}">{{ $journalEntry->originalEntry->entry_number ?? $journalEntry->reverses_entry_id }}</a></td>
+                                </tr>
+                            @endif
+                            @if($journalEntry->reversed_by_entry_id)
+                                <tr>
+                                    <td><strong>{{ __('Reversed by Entry') }}:</strong></td>
+                                    <td><a href="{{ route('journal-entries.show', $journalEntry->reversed_by_entry_id) }}">{{ $journalEntry->reversingEntry->entry_number ?? $journalEntry->reversed_by_entry_id }}</a></td>
+                                </tr>
+                            @endif
                             <tr>
                                 <td><strong>{{ __('Created At') }}:</strong></td>
                                 <td>{{ $journalEntry->created_at ? $journalEntry->created_at->format('Y-m-d H:i:s') : 'N/A' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>{{ __('Last Updated At') }}:</strong></td>
+                                <td>{{ $journalEntry->updated_at ? $journalEntry->updated_at->format('Y-m-d H:i:s') : 'N/A' }}
                                 </td>
                             </tr>
                         </table>
@@ -157,6 +182,34 @@
                         @endif
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attachments -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">{{ __('Attachments') }}</h6>
+            </div>
+            <div class="card-body">
+                @if($attachments->isNotEmpty())
+                    <div class="list-group">
+                        @foreach($attachments as $attachmentGroup)
+                            @foreach($attachmentGroup->files as $file)
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <a href="{{ route('journal-entries.attachments.download', $file->id) }}" target="_blank">
+                                        <i class="icon-base ti tabler-file me-2"></i>{{ $file->file_name }} ({{ round($file->size / 1024, 2) }} KB)
+                                    </a>
+                                </div>
+                            @endforeach
+                        @endforeach
+                    </div>
+                @else
+                    <p class="text-muted">{{ __('No attachments found for this entry.') }}</p>
+                @endif
             </div>
         </div>
     </div>

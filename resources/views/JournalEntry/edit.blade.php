@@ -16,16 +16,13 @@
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">{{ __('Edit Journal Entry') }}</h5>
                         <div class="btn-group">
-                            <a href="{{ route('journal-entries.show', $journalEntry->id) }}" class="btn btn-info btn-sm">
-                                <i class="icon-base ti tabler-eye me-1"></i>{{ __('View') }}
-                            </a>
                             <a href="{{ route('journal-entries.index') }}" class="btn btn-secondary btn-sm">
                                 <i class="icon-base ti tabler-arrow-left me-1"></i>{{ __('Back to List') }}
                             </a>
                         </div>
                     </div>
 
-                    <form id="editEntryForm">
+                    <form id="editEntryForm" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
                         <div class="card-body">
@@ -63,6 +60,21 @@
                                 </div>
                             </div>
 
+                            <!-- Datalists for search -->
+                            <datalist id="accountsList">
+                                @foreach ($accounts as $account)
+                                    <option value="{{ $account->name }} — {{ $account->code }}"
+                                        data-id="{{ $account->id }}">
+                                @endforeach
+                            </datalist>
+
+                            <datalist id="costCentersList">
+                                @foreach ($costCenters as $costCenter)
+                                    <option value="{{ $costCenter->name }} — {{ $costCenter->code }}"
+                                        data-id="{{ $costCenter->id }}">
+                                @endforeach
+                            </datalist>
+
                             <!-- Journal Entry Details -->
                             <div class="card border">
                                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -86,18 +98,14 @@
                                             </thead>
                                             <tbody id="detailsTableBody">
                                                 @foreach ($journalEntry->details as $index => $detail)
-                                                    <tr>
+                                                    <tr class="detail-row">
                                                         <td>
-                                                            <select class="form-select account-select"
-                                                                name="details[{{ $index }}][account_id]" required>
-                                                                <option value="">{{ __('Select Account') }}</option>
-                                                                @foreach ($accounts as $account)
-                                                                    <option value="{{ $account->id }}"
-                                                                        {{ $detail->account_id == $account->id ? 'selected' : '' }}>
-                                                                        {{ $account->code }} - {{ $account->name }}
-                                                                    </option>
-                                                                @endforeach
-                                                            </select>
+                                                            <input class="form-control account-search" list="accountsList"
+                                                                value="{{ $detail->account ? $detail->account->name . ' — ' . $detail->account->code : '' }}"
+                                                                required placeholder="{{ __('Search for account') }}">
+                                                            <input type="hidden"
+                                                                name="details[{{ $index }}][account_id]"
+                                                                class="account-id" value="{{ $detail->account_id }}">
                                                         </td>
                                                         <td>
                                                             <input type="text" class="form-control statement-input"
@@ -106,17 +114,14 @@
                                                                 placeholder="{{ __('Enter statement') }}">
                                                         </td>
                                                         <td>
-                                                            <select class="form-select cost-center-select"
-                                                                name="details[{{ $index }}][cost_center_id]">
-                                                                <option value="">{{ __('Select Cost Center') }}
-                                                                </option>
-                                                                @foreach ($costCenters as $costCenter)
-                                                                    <option value="{{ $costCenter->id }}"
-                                                                        {{ $detail->cost_center_id == $costCenter->id ? 'selected' : '' }}>
-                                                                        {{ $costCenter->code }} - {{ $costCenter->name }}
-                                                                    </option>
-                                                                @endforeach
-                                                            </select>
+                                                            <input class="form-control cost-center-search"
+                                                                list="costCentersList"
+                                                                value="{{ $detail->costCenter ? $detail->costCenter->name . ' — ' . $detail->costCenter->code : '' }}"
+                                                                placeholder="{{ __('Search for cost center') }}">
+                                                            <input type="hidden"
+                                                                name="details[{{ $index }}][cost_center_id]"
+                                                                class="cost-center-id"
+                                                                value="{{ $detail->cost_center_id }}">
                                                         </td>
                                                         <td>
                                                             <input type="number" class="form-control debit-input"
@@ -127,8 +132,8 @@
                                                         </td>
                                                         <td>
                                                             <input type="number" class="form-control credit-input"
-                                                                name="details[{{ $index }}][credit]" step="0.01"
-                                                                min="0"
+                                                                name="details[{{ $index }}][credit]"
+                                                                step="0.01" min="0"
                                                                 value="{{ $detail->credit > 0 ? $detail->credit : '' }}"
                                                                 placeholder="0.00">
                                                         </td>
@@ -145,7 +150,8 @@
                                             <tfoot class="table-secondary">
                                                 <tr>
                                                     <td colspan="3" class="text-end">
-                                                        <strong>{{ __('Total') }}:</strong></td>
+                                                        <strong>{{ __('Total') }}:</strong>
+                                                    </td>
                                                     <td class="text-end"><strong
                                                             id="totalDebit">{{ number_format($journalEntry->details->sum('debit'), 2) }}</strong>
                                                     </td>
@@ -157,6 +163,44 @@
                                             </tfoot>
                                         </table>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- Attachments -->
+                            <div class="card border mt-4">
+                                <div class="card-header">
+                                    <h6 class="mb-0">{{ __('Attachments') }}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <input type="file" class="form-control" id="attachments" name="attachments[]"
+                                        multiple>
+                                    <div class="form-text mb-3">
+                                        {{ __('Max file size: 10MB per file. Allowed types: images, PDF.') }}</div>
+
+                                    @if ($attachments->isNotEmpty())
+                                        <div class="list-group" id="existingAttachments">
+                                            @foreach ($attachments as $attachmentGroup)
+                                                @foreach ($attachmentGroup->files as $file)
+                                                    <div
+                                                        class="list-group-item d-flex justify-content-between align-items-center">
+                                                        <a href="{{ route('journal-entries.attachments.download', $file->id) }}"
+                                                            target="_blank">
+                                                            <i
+                                                                class="icon-base ti tabler-file me-2"></i>{{ $file->file_name }}
+                                                            ({{ round($file->size / 1024, 2) }} KB)
+                                                        </a>
+                                                        <button type="button"
+                                                            class="btn btn-link text-danger p-1 delete-attachment-file"
+                                                            title="{{ __('Remove') }}" data-id="{{ $file->id }}">
+                                                            <i class="icon-base ti tabler-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                @endforeach
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <p class="text-muted">{{ __('No attachments yet.') }}</p>
+                                    @endif
                                 </div>
                             </div>
 
@@ -190,59 +234,33 @@
             const form = document.getElementById('editEntryForm');
             let detailRowCounter = {{ count($journalEntry->details) }};
 
-            // Clear form errors
-            function clearFormErrors(form) {
-                form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-                form.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
-            }
-
-            // Show form errors
-            function showFormErrors(form, errors) {
-                Object.keys(errors).forEach(key => {
-                    const input = form.querySelector(`[name="${key}"]`);
-                    if (input) {
-                        input.classList.add('is-invalid');
-                        const feedback = input.nextElementSibling;
-                        if (feedback && feedback.classList.contains('invalid-feedback')) {
-                            feedback.textContent = errors[key][0];
-                        }
-                    }
-                });
-            }
-
-            // Add detail row function (same as create page)
-            function addDetailRow(account = '', statement = '', costCenter = '', debit = '', credit = '') {
+            function addDetailRow() {
                 detailRowCounter++;
                 const tableBody = document.getElementById('detailsTableBody');
-                const row = document.createElement('tr');
-                row.innerHTML = `
+                const newRow = document.createElement('tr');
+                const prevRow = tableBody.querySelector('tr:last-child');
+                const statement = prevRow ? prevRow.querySelector('.statement-input').value : '';
+
+                newRow.innerHTML = `
                     <td>
-                        <select class="form-select account-select" name="details[${detailRowCounter}][account_id]" required>
-                            <option value="">{{ __('Select Account') }}</option>
-                            @foreach ($accounts as $account)
-                                <option value="{{ $account->id }}">{{ $account->code }} - {{ $account->name }}</option>
-                            @endforeach
-                        </select>
+                        <input class="form-control account-search" list="accountsList" placeholder="{{ __('Search for account') }}" required>
+                        <input type="hidden" name="details[${detailRowCounter}][account_id]" class="account-id">
                     </td>
                     <td>
                         <input type="text" class="form-control statement-input" name="details[${detailRowCounter}][statement]"
                                value="${statement}" placeholder="{{ __('Enter statement') }}">
                     </td>
                     <td>
-                        <select class="form-select cost-center-select" name="details[${detailRowCounter}][cost_center_id]">
-                            <option value="">{{ __('Select Cost Center') }}</option>
-                            @foreach ($costCenters as $costCenter)
-                                <option value="{{ $costCenter->id }}">{{ $costCenter->code }} - {{ $costCenter->name }}</option>
-                            @endforeach
-                        </select>
+                        <input class="form-control cost-center-search" list="costCentersList" placeholder="{{ __('Search for cost center') }}">
+                        <input type="hidden" name="details[${detailRowCounter}][cost_center_id]" class="cost-center-id">
                     </td>
                     <td>
                         <input type="number" class="form-control debit-input" name="details[${detailRowCounter}][debit]"
-                               step="0.01" min="0" value="${debit}" placeholder="0.00">
+                               step="0.01" min="0" value="" placeholder="0.00">
                     </td>
                     <td>
                         <input type="number" class="form-control credit-input" name="details[${detailRowCounter}][credit]"
-                               step="0.01" min="0" value="${credit}" placeholder="0.00">
+                               step="0.01" min="0" value="" placeholder="0.00">
                     </td>
                     <td class="text-center">
                         <button type="button" class="btn btn-link text-danger p-1 remove-row" title="{{ __('Remove') }}">
@@ -250,72 +268,31 @@
                         </button>
                     </td>
                 `;
-                tableBody.appendChild(row);
-
-                // Add event listeners
-                const debitInput = row.querySelector('.debit-input');
-                const creditInput = row.querySelector('.credit-input');
-
-                debitInput.addEventListener('input', function() {
-                    if (this.value && this.value > 0) {
-                        creditInput.value = '';
-                    }
-                    calculateTotals();
-                });
-
-                creditInput.addEventListener('input', function() {
-                    if (this.value && this.value > 0) {
-                        debitInput.value = '';
-                    }
-                    calculateTotals();
-                });
-
-                row.querySelector('.remove-row').addEventListener('click', function() {
-                    if (tableBody.children.length > 1) {
-                        row.remove();
-                        calculateTotals();
-                    } else {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: '{{ __('Warning') }}',
-                            text: '{{ __('At least one detail row is required') }}'
-                        });
-                    }
-                });
-
-                calculateTotals();
+                tableBody.appendChild(newRow);
+                attachRowEventListeners(newRow);
             }
 
-            // Calculate totals (same as create page)
             function calculateTotals() {
-                let totalDebit = 0;
-                let totalCredit = 0;
-
-                document.querySelectorAll('.debit-input').forEach(input => {
-                    if (input.value) {
-                        totalDebit += parseFloat(input.value);
-                    }
-                });
-
-                document.querySelectorAll('.credit-input').forEach(input => {
-                    if (input.value) {
-                        totalCredit += parseFloat(input.value);
-                    }
-                });
+                let totalDebit = 0,
+                    totalCredit = 0;
+                document.querySelectorAll('.debit-input').forEach(input => totalDebit += parseFloat(input.value ||
+                    0));
+                document.querySelectorAll('.credit-input').forEach(input => totalCredit += parseFloat(input.value ||
+                    0));
 
                 document.getElementById('totalDebit').textContent = totalDebit.toFixed(2);
                 document.getElementById('totalCredit').textContent = totalCredit.toFixed(2);
 
-                // Check balance
                 const balanceAlert = document.getElementById('balanceAlert');
                 const balanceMessage = document.getElementById('balanceMessage');
+                const diff = Math.abs(totalDebit - totalCredit);
 
-                if (totalDebit !== totalCredit) {
+                if (diff > 0.01) {
                     balanceAlert.style.display = 'block';
                     balanceAlert.className = 'alert alert-danger mt-3';
                     balanceMessage.textContent =
-                        `{{ __('Entry is not balanced. Difference:') }} ${Math.abs(totalDebit - totalCredit).toFixed(2)}`;
-                } else if (totalDebit > 0 && totalCredit > 0) {
+                        `{{ __('Entry is not balanced. Difference:') }} ${diff.toFixed(2)}`;
+                } else if (totalDebit > 0 && totalCredit > 0 && diff < 0.01) {
                     balanceAlert.style.display = 'block';
                     balanceAlert.className = 'alert alert-success mt-3';
                     balanceMessage.textContent = '{{ __('Entry is balanced') }}';
@@ -324,131 +301,167 @@
                 }
             }
 
-            // Add detail row button
-            document.getElementById('addDetailRow').addEventListener('click', function() {
-                addDetailRow();
-            });
-
-            // Attach events to existing rows
-            document.querySelectorAll('.debit-input').forEach(input => {
-                input.addEventListener('input', function() {
-                    const row = this.closest('tr');
-                    const creditInput = row.querySelector('.credit-input');
-                    if (this.value && this.value > 0) {
-                        creditInput.value = '';
+            function attachRowEventListeners(row) {
+                // Event listeners for search inputs
+                row.querySelector('.account-search').addEventListener('input', function() {
+                    const value = this.value;
+                    const accountIdInput = row.querySelector('.account-id');
+                    const option = document.querySelector(`#accountsList option[value="${value}"]`);
+                    if (option) {
+                        accountIdInput.value = option.dataset.id;
+                    } else {
+                        accountIdInput.value = '';
                     }
+                });
+
+                row.querySelector('.cost-center-search').addEventListener('input', function() {
+                    const value = this.value;
+                    const costCenterIdInput = row.querySelector('.cost-center-id');
+                    const option = document.querySelector(`#costCentersList option[value="${value}"]`);
+                    if (option) {
+                        costCenterIdInput.value = option.dataset.id;
+                    } else {
+                        costCenterIdInput.value = '';
+                    }
+                });
+
+                const debitInput = row.querySelector('.debit-input');
+                const creditInput = row.querySelector('.credit-input');
+
+                debitInput.addEventListener('input', function() {
+                    if (this.value && this.value > 0) creditInput.value = '';
                     calculateTotals();
                 });
-            });
 
-            document.querySelectorAll('.credit-input').forEach(input => {
-                input.addEventListener('input', function() {
-                    const row = this.closest('tr');
-                    const debitInput = row.querySelector('.debit-input');
-                    if (this.value && this.value > 0) {
-                        debitInput.value = '';
-                    }
+                creditInput.addEventListener('input', function() {
+                    if (this.value && this.value > 0) debitInput.value = '';
                     calculateTotals();
                 });
-            });
 
-            document.querySelectorAll('.remove-row').forEach(button => {
-                button.addEventListener('click', function() {
-                    const tableBody = document.getElementById('detailsTableBody');
-                    if (tableBody.children.length > 1) {
-                        this.closest('tr').remove();
+                row.querySelector('.remove-row').addEventListener('click', function() {
+                    if (document.querySelectorAll('#detailsTableBody tr').length > 1) {
+                        row.remove();
                         calculateTotals();
                     } else {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: '{{ __('Warning') }}',
-                            text: '{{ __('At least one detail row is required') }}'
-                        });
+                        Swal.fire('{{ __('Warning') }}',
+                            '{{ __('At least one detail row is required') }}', 'warning');
                     }
                 });
+            }
+
+            document.getElementById('addDetailRow').addEventListener('click', addDetailRow);
+
+            document.querySelectorAll('#detailsTableBody tr').forEach(row => {
+                attachRowEventListeners(row);
             });
 
-            // Form submission
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
-                clearFormErrors(this);
 
-                // Validate balance
                 const totalDebit = parseFloat(document.getElementById('totalDebit').textContent);
                 const totalCredit = parseFloat(document.getElementById('totalCredit').textContent);
 
-                if (totalDebit !== totalCredit) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: '{{ __('Error') }}',
-                        text: '{{ __('Journal entry must be balanced') }}'
-                    });
+                if (Math.abs(totalDebit - totalCredit) > 0.01) {
+                    Swal.fire('{{ __('Error') }}', '{{ __('Journal entry must be balanced') }}',
+                        'error');
                     return;
                 }
-
                 if (totalDebit === 0) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: '{{ __('Error') }}',
-                        text: '{{ __('Journal entry must have at least one debit and credit entry') }}'
-                    });
+                    Swal.fire('{{ __('Error') }}',
+                        '{{ __('Journal entry must have at least one debit and credit entry') }}',
+                        'error');
                     return;
                 }
 
-                const formData = new FormData(this);
                 const submitBtn = document.getElementById('submitBtn');
-                const originalText = submitBtn.innerHTML;
-
                 submitBtn.disabled = true;
                 submitBtn.innerHTML =
-                    '<span class="spinner-border spinner-border-sm me-2"></span>{{ __('Updating...') }}';
+                    `<span class="spinner-border spinner-border-sm me-2"></span>{{ __('Updating...') }}`;
+
+                // Collect IDs of files to be deleted
+                const deletedFileIds = [];
+                document.querySelectorAll('#existingAttachments .deleted-file-input').forEach(input => {
+                    deletedFileIds.push(input.value);
+                });
+
+                const formData = new FormData(form);
+                deletedFileIds.forEach(id => {
+                    formData.append('deleted_attachments[]', id);
+                });
 
                 fetch('{{ route('journal-entries.update', $journalEntry->id) }}', {
                         method: 'POST',
                         body: formData,
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         }
                     })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
                             Swal.fire({
-                                icon: 'success',
-                                title: '{{ __('Success') }}',
-                                text: data.message,
-                                timer: 2000,
-                                showConfirmButton: false
-                            }).then(() => {
-                                window.location.href = '{{ route('journal-entries.index') }}';
-                            });
+                                    icon: 'success',
+                                    title: '{{ __('Success') }}',
+                                    text: data.message,
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                })
+                                .then(() => window.location.href =
+                                    '{{ route('journal-entries.index') }}');
                         } else {
-                            if (data.errors) {
-                                showFormErrors(form, data.errors);
-                            } else {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: '{{ __('Error') }}',
-                                    text: data.message || '{{ __('An error occurred') }}'
-                                });
-                            }
+                            Swal.fire('{{ __('Error') }}', data.message ||
+                                '{{ __('An error occurred') }}', 'error');
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: '{{ __('Error') }}',
-                            text: '{{ __('An error occurred while updating') }}'
-                        });
+                        Swal.fire('{{ __('Error') }}',
+                            '{{ __('An error occurred while updating') }}', 'error');
                     })
                     .finally(() => {
                         submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalText;
+                        submitBtn.innerHTML =
+                            `<i class="icon-base ti tabler-device-floppy me-1"></i>{{ __('Update Journal Entry') }}`;
                     });
             });
 
-            // Initial calculation
+            // Handle delete attachment file button clicks
+            document.querySelectorAll('.delete-attachment-file').forEach(button => {
+                button.addEventListener('click', function() {
+                    const fileId = this.dataset.id;
+                    const listItem = this.closest('.list-group-item');
+
+                    Swal.fire({
+                        title: '{{ __('Are you sure?') }}',
+                        text: '{{ __('You will not be able to recover this file!') }}',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: '{{ __('Yes, delete it!') }}',
+                        cancelButtonText: '{{ __('Cancel') }}'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Add a hidden input to mark for deletion on form submission
+                            const hiddenInput = document.createElement('input');
+                            hiddenInput.type = 'hidden';
+                            hiddenInput.name = 'deleted_attachments[]';
+                            hiddenInput.value = fileId;
+                            hiddenInput.classList.add(
+                            'deleted-file-input'); // Add a class to easily find them
+                            form.appendChild(hiddenInput);
+
+                            listItem.remove(); // Remove from UI immediately
+
+                            Swal.fire('{{ __('Marked for deletion') }}',
+                                '{{ __('File will be deleted upon saving the entry.') }}',
+                                'info');
+                        }
+                    });
+                });
+            });
+
             calculateTotals();
         });
     </script>

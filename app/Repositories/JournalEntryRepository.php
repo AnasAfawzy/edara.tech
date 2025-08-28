@@ -18,15 +18,32 @@ class JournalEntryRepository extends BaseRepository implements JournalEntryRepos
 
     public function allWithDetails(): Collection
     {
-        return $this->model->with(['details.account', 'currency', 'financialYear'])
+        return $this->model->with([
+            'details' => fn ($q) => $q->orderBy('id'),
+            'details.account', 'currency', 'financialYear', 'creator', 'updater'
+        ])
             ->orderBy('entry_date', 'desc')
             ->orderBy('id', 'desc')
             ->get();
     }
 
+    public function allWithDetailsPaginated(int $perPage = 25): LengthAwarePaginator
+    {
+        return $this->model->with([
+            'details' => fn ($q) => $q->orderBy('id'),
+            'details.account', 'currency', 'financialYear', 'creator', 'updater'
+        ])
+            ->orderBy('entry_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate($perPage);
+    }
+
     public function findWithDetails(int $id): ?Model
     {
-        return $this->model->with(['details.account', 'currency', 'financialYear'])->find($id);
+        return $this->model->with([
+            'details' => fn ($q) => $q->orderBy('id'),
+            'details.account', 'details.costCenter', 'currency', 'financialYear', 'creator', 'updater'
+        ])->find($id);
     }
 
     public function createWithDetails(array $data, array $details)
@@ -41,8 +58,16 @@ class JournalEntryRepository extends BaseRepository implements JournalEntryRepos
                     'credit' => $detail['credit'] ?? 0,
                     'cost_center_id' => $detail['cost_center_id'] ?? null,
                     'statement' => $detail['statement'] ?? null,
-
                 ]);
+            }
+
+            // If this is a reversing entry, link it to the original entry
+            if (!empty($data['reverses_entry_id'])) {
+                $originalEntry = $this->find($data['reverses_entry_id']);
+                if ($originalEntry) {
+                    $originalEntry->reversed_by_entry_id = $journalEntry->id;
+                    $originalEntry->save();
+                }
             }
 
             return $journalEntry->fresh(['details.account', 'currency', 'financialYear']);
@@ -76,7 +101,10 @@ class JournalEntryRepository extends BaseRepository implements JournalEntryRepos
 
     public function searchEntries(array $filters): LengthAwarePaginator
     {
-        $query = $this->model->with(['details.account', 'currency', 'financialYear']);
+        $query = $this->model->with([
+            'details' => fn ($q) => $q->orderBy('id'),
+            'details.account', 'currency', 'financialYear', 'creator', 'updater'
+        ]);
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];

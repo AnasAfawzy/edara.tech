@@ -17,6 +17,7 @@ interface JournalEntryRepositoryInterface
 
     // Journal Entry specific methods
     public function allWithDetails(): Collection;
+    public function allWithDetailsPaginated(int $perPage = 25): LengthAwarePaginator;
     public function findWithDetails(int $id): ?Model;
     public function createWithDetails(array $data, array $details);
     public function updateWithDetails(int $id, array $data, array $details);

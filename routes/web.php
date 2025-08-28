@@ -41,6 +41,13 @@ Route::group(
         Route::resource('cost-centers', CostCenterController::class);
         Route::get('journal-entries/search', [JournalEntryController::class, 'search'])->name('journal-entries.search');
 
+        Route::get('api/accounts/search', [JournalEntryController::class, 'searchAccounts'])->name('api.accounts.search');
+        Route::get('api/cost-centers/search', [JournalEntryController::class, 'searchCostCenters'])->name('api.cost-centers.search');
+
+        Route::get('journal-entries/{id}/reverse', [JournalEntryController::class, 'reverse'])->name('journal-entries.reverse');
+        Route::get('journal-entries/attachments/{fileId}/download', [JournalEntryController::class, 'downloadAttachmentFile'])->name('journal-entries.attachments.download');
+        Route::delete('journal-entries/attachments/{attachmentId}', [JournalEntryController::class, 'deleteAttachment'])->name('journal-entries.attachments.delete');
+        Route::delete('journal-entries/attachments/files/{fileId}', [JournalEntryController::class, 'deleteAttachmentFile'])->name('journal-entries.attachments.files.delete');
         Route::resource('journal-entries', JournalEntryController::class);
         Route::resource('cash-vaults', CashVaultController::class);
         Route::resource('banks', BankController::class);
@@ -92,3 +99,4 @@ Route::group(
         require __DIR__ . '/auth.php';
     }
 );
+
