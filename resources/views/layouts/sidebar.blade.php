@@ -66,7 +66,6 @@
                 </li>
                 <li class="menu-item">
                     <a href="{{ route('opening-journal-entry.index') }}" class="menu-link">
-                        <i class="menu-icon icon-base fa fa-file-invoice"></i> {{-- Using a relevant icon --}}
                         <div>{{ __('Opening Journal Entry') }}</div>
                     </a>
                 </li>

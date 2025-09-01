@@ -59,7 +59,7 @@
                                         // حساب الرصيد الختامي = الرصيد الافتتاحي + صافي الحركات
                                         $lastTransaction = $transactions->last();
                                         $netMovement = $totalDebit - $totalCredit;
-                                        $closingBalance = $openingBalance + $netMovement;
+                                        $closingBalance = $netMovement;
                                     @endphp
                                     {{ number_format($closingBalance, 2) }}
                                 @endif
