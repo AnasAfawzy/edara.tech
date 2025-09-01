@@ -162,6 +162,7 @@
         const delete_label = {!! json_encode(__('Delete')) !!};
         const add_label = {!! json_encode(__('Add')) !!};
         const view_label = {!! json_encode(__('View')) !!};
+        const statement_label = {!! json_encode(__('Account Statement')) !!};
         const deleted = {!! json_encode(__('Deleted')) !!};
         const error = {!! json_encode(__('Error')) !!};
         const account_deleted_successfully = {!! json_encode(__('Account deleted successfully')) !!};
@@ -395,10 +396,7 @@
                     .then(async response => {
                         const contentType = response.headers.get('content-type') || '';
                         const data = contentType.includes('application/json') ? await response
-                            .json() : {
-                                success: false,
-                                message: await response.text()
-                            };
+                            .json() : { success: false, message: await response.text() };
                         if (!response.ok) throw data;
                         return data;
                     })
@@ -488,10 +486,7 @@
                     .then(async response => {
                         const contentType = response.headers.get('content-type') || '';
                         const data = contentType.includes('application/json') ? await response
-                            .json() : {
-                                success: false,
-                                message: await response.text()
-                            };
+                            .json() : { success: false, message: await response.text() };
                         if (!response.ok) throw data;
                         return data;
                     })

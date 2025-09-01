@@ -6,17 +6,67 @@
     {!! breadcrumb([['title' => __('Accounting')], ['title' => __('Journal Entries')]]) !!}
 
     <div class="container-fluid">
+
+        <!-- Search and Filters Card -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3"><i class="icon-base ti tabler-filter"></i> {{ __('Filters') }}</h5>
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label for="search" class="form-label">{{ __('Search') }}</label>
+                        <input type="text" name="search" id="search" value="{{ request('search') }}" class="form-control"
+                            placeholder="{{ __('Search by number, description, account...') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dateFrom" class="form-label">{{ __('From Date') }}</label>
+                        <input type="date" name="date_from" id="dateFrom" value="{{ request('date_from') }}" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dateTo" class="form-label">{{ __('To Date') }}</label>
+                        <input type="date" name="date_to" id="dateTo" value="{{ request('date_to') }}" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="statusFilter" class="form-label">{{ __('Entry Status') }}</label>
+                        <select name="status" id="statusFilter" class="form-select">
+                            <option value="">{{ __('All') }}</option>
+                            <option value="draft" @selected(request('status') == 'draft')>{{ __('Draft') }}</option>
+                            <option value="pending" @selected(request('status') == 'pending')>{{ __('Pending') }}</option>
+                            <option value="approved" @selected(request('status') == 'approved')>{{ __('Approved') }}</option>
+                            <option value="posted" @selected(request('status') == 'posted')>{{ __('Posted') }}</option>
+                            <option value="reversed" @selected(request('status') == 'reversed')>{{ __('Reversed') }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="sourceType" class="form-label">{{ __('Source Type') }}</label>
+                        <select name="source_type" id="sourceType" class="form-select">
+                            <option value="">{{ __('All') }}</option>
+                            <option value="manual" @selected(request('source_type') == 'manual')>{{ __('Manual') }}</option>
+                            <option value="system" @selected(request('source_type') == 'system')>{{ __('System') }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="reversalStatus" class="form-label">{{ __('Reversal Status') }}</label>
+                        <select name="reversal_status" id="reversalStatus" class="form-select">
+                            <option value="">{{ __('All') }}</option>
+                            <option value="original" @selected(request('reversal_status') == 'original')>{{ __('Original') }}</option>
+                            <option value="reversed" @selected(request('reversal_status') == 'reversed')>{{ __('Reversed') }}</option>
+                            <option value="reversing" @selected(request('reversal_status') == 'reversing')>{{ __('Reversing') }}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <!-- Search and Filters -->
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center">
                             <form method="GET" action="{{ route('journal-entries.index') }}" id="perPageForm"
                                 class="d-flex align-items-center">
                                 <label for="perPage" class="form-label me-2 mb-0">{{ __('Show') }}:</label>
                                 <select name="perPage" id="perPage" class="form-select form-select-sm"
-                                    style="width: auto;" onchange="document.getElementById('perPageForm').submit()">
+                                    style="width: auto;" onchange="reloadJournalEntriesTable()">
                                     <option value="10" @selected(request('perPage', 25) == 10)>10</option>
                                     <option value="25" @selected(request('perPage', 25) == 25)>25</option>
                                     <option value="50" @selected(request('perPage', 25) == 50)>50</option>
@@ -26,57 +76,22 @@
                             </form>
                         </div>
 
-                        <div class="d-flex align-items-center gap-3">
-                            <!-- Filters -->
-                            <div class="d-flex align-items-center gap-2">
-                                <input type="date" name="date_from" id="dateFrom" class="form-control form-control-sm"
-                                    value="{{ request('date_from') }}" placeholder="{{ __('From Date') }}"
-                                    style="width: 150px;">
-                                <input type="date" name="date_to" id="dateTo" class="form-control form-control-sm"
-                                    value="{{ request('date_to') }}" placeholder="{{ __('To Date') }}"
-                                    style="width: 150px;">
-                                <div class="input-group" style="width: 250px;">
-                                    <input type="text" name="search" id="search" class="form-control form-control-sm"
-                                        placeholder="{{ __('Search...') }}" value="{{ request('search') }}">
-                                </div>
-
-                                <select name="source_type" id="sourceType" class="form-select form-select-sm"
-                                    style="width: 150px;">
-                                    <option value="">{{ __('All Sources') }}</option>
-                                    <option value="manual" @selected(request('source_type') == 'manual')>{{ __('Manual') }}</option>
-                                    <option value="system" @selected(request('source_type') == 'system')>{{ __('System') }}</option>
-                                </select>
-
-                                <select name="reversal_status" id="reversalStatus" class="form-select form-select-sm"
-                                    style="width: 150px;">
-                                    <option value="">{{ __('All Statuses') }}</option>
-                                    <option value="original" @selected(request('reversal_status') == 'original')>{{ __('Original') }}</option>
-                                    <option value="reversed" @selected(request('reversal_status') == 'reversed')>{{ __('Reversed') }}</option>
-                                    <option value="reversing" @selected(request('reversal_status') == 'reversing')>{{ __('Reversing') }}</option>
-                                </select>
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div class="d-flex gap-2">
-                                <a href="{{ route('journal-entries.create') }}" class="btn btn-primary btn-sm">
-                                    <i class="icon-base ti tabler-plus me-1"></i>
-                                    {{ __('Add Journal Entry') }}
-                                </a>
-                                <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-success btn-sm dropdown-toggle"
-                                        data-bs-toggle="dropdown">
-                                        <i class="icon-base ti tabler-file-export me-1"></i>{{ __('Export') }}
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" id="exportExcel">
-                                                <i
-                                                    class="icon-base ti tabler-file-spreadsheet me-1"></i>{{ __('Excel') }}</a>
-                                        </li>
-                                        <li><a class="dropdown-item" href="#" id="exportPdf">
-                                                <i class="icon-base ti tabler-file-pdf me-1"></i>{{ __('PDF') }}</a>
-                                        </li>
-                                    </ul>
-                                </div>
+                        <div class="d-flex gap-2">
+                            <a href="{{ route('journal-entries.create') }}" class="btn btn-primary">
+                                <i class="icon-base ti tabler-plus me-1"></i>
+                                {{ __('Add Journal Entry') }}
+                            </a>
+                            <div class="dropdown">
+                                <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="icon-base ti tabler-file-export me-1"></i>{{ __('Export') }}
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" id="exportExcel"><i
+                                                class="icon-base ti tabler-file-spreadsheet me-1"></i>{{ __('Excel') }}</a>
+                                    </li>
+                                    <li><a class="dropdown-item" href="#" id="exportPdf"><i
+                                                class="icon-base ti tabler-file-pdf me-1"></i>{{ __('PDF') }}</a></li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -91,7 +106,6 @@
                                     <th>{{ __('Currency') }}</th>
                                     <th>{{ __('Total Debit') }}</th>
                                     <th>{{ __('Total Credit') }}</th>
-                                    <th>{{ __('Source Type') }}</th>
                                     <th>{{ __('Status') }}</th>
                                     <th>{{ __('Financial Year') }}</th>
                                     <th>{{ __('Actions') }}</th>
@@ -122,8 +136,7 @@
                     <!-- Content will be loaded here -->
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"
-                        data-bs-dismiss="modal">{{ __('Close') }}</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Close') }}</button>
                 </div>
             </div>
         </div>
@@ -145,25 +158,30 @@
                 };
             }
 
-            function reloadJournalEntriesTable() {
+            function getFilterParams() {
                 let search = document.getElementById('search').value;
                 let dateFrom = document.getElementById('dateFrom').value;
                 let dateTo = document.getElementById('dateTo').value;
-                let perPage = document.getElementById('perPage').value;
-                let sourceType = document.getElementById('sourceType').value; // New
-                let reversalStatus = document.getElementById('reversalStatus').value; // New
+                let sourceType = document.getElementById('sourceType').value;
+                let reversalStatus = document.getElementById('reversalStatus').value;
+                let status = document.getElementById('statusFilter').value;
 
-                const params = new URLSearchParams({
+                return new URLSearchParams({
                     search: search,
                     date_from: dateFrom,
                     date_to: dateTo,
-                    per_page: perPage,
-                    source_type: sourceType, // New
-                    reversal_status: reversalStatus // New
+                    source_type: sourceType,
+                    reversal_status: reversalStatus,
+                    status: status
                 });
+            }
 
-                // Update URL for bookmarking
-                // window.history.pushState({}, '', `{{ route('journal-entries.index') }}?${params}`);
+            function reloadJournalEntriesTable() {
+                let perPage = document.getElementById('perPage').value;
+                const params = getFilterParams();
+                params.append('per_page', perPage);
+
+                window.history.pushState({}, '', `{{ route('journal-entries.index') }}?${params}`);
 
                 fetch(`{{ route('journal-entries.search') }}?${params}`, {
                         headers: {
@@ -236,21 +254,76 @@
                                     .then(response => response.json())
                                     .then(data => {
                                         if (data.success) {
-                                            Swal.fire('{{ __('Deleted!') }}', data
-                                                .message, 'success');
+                                            Swal.fire('{{ __('Deleted!') }}', data.message, 'success');
                                             reloadJournalEntriesTable();
                                         } else {
-                                            Swal.fire('{{ __('Error') }}', data
-                                                .message ||
-                                                '{{ __('Failed to delete') }}',
-                                                'error');
+                                            Swal.fire('{{ __('Error') }}', data.message || '{{ __('Failed to delete') }}', 'error');
                                         }
                                     })
                                     .catch(error => {
                                         console.error('Error:', error);
-                                        Swal.fire('{{ __('Error') }}',
-                                            '{{ __('An error occurred') }}',
-                                            'error');
+                                        Swal.fire('{{ __('Error') }}', '{{ __('An error occurred') }}', 'error');
+                                    });
+                            }
+                        });
+                    });
+                });
+            }
+
+            function attachWorkflowEvents() {
+                document.querySelectorAll('.workflow-action').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const entryId = this.dataset.id;
+                        const action = this.dataset.action;
+
+                        let confirmTitle = '{{ __("Are you sure?") }}';
+                        let confirmText = `{{ __("You are about to") }} ${action} {{ __("this entry.") }}`;
+                        let confirmButton = '{{ __("Yes") }}';
+
+                        if (action === 'submit') {
+                            confirmTitle = '{{ __("Submit for Approval?") }}';
+                            confirmText = '{{ __("This will submit the journal entry for approval.") }}';
+                            confirmButton = '{{ __("Yes, submit it!") }}';
+                        } else if (action === 'approve') {
+                            confirmTitle = '{{ __("Approve Entry?") }}';
+                            confirmText = '{{ __("This will approve the journal entry.") }}';
+                            confirmButton = '{{ __("Yes, approve it!") }}';
+                        } else if (action === 'reject') {
+                            confirmTitle = '{{ __("Reject Entry?") }}';
+                            confirmText = '{{ __("This will reject the journal entry and return it to draft status.") }}';
+                            confirmButton = '{{ __("Yes, reject it!") }}';
+                        }
+
+                        Swal.fire({
+                            title: confirmTitle,
+                            text: confirmText,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3085d6',
+                            cancelButtonColor: '#d33',
+                            confirmButtonText: confirmButton,
+                            cancelButtonText: '{{ __("Cancel") }}'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                fetch(`{{ url('journal-entries') }}/${entryId}/${action}`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                            'X-Requested-With': 'XMLHttpRequest'
+                                        }
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            Swal.fire('{{ __("Success!") }}', data.message, 'success');
+                                            reloadJournalEntriesTable();
+                                        } else {
+                                            Swal.fire('{{ __("Error") }}', data.message || '{{ __("An error occurred") }}', 'error');
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Error:', error);
+                                        Swal.fire('{{ __("Error") }}', '{{ __("An error occurred") }}', 'error');
                                     });
                             }
                         });
@@ -261,6 +334,7 @@
             function reattachEventListeners() {
                 attachViewEvents();
                 attachDeleteEvents();
+                attachWorkflowEvents();
             }
 
             const debouncedReload = debounce(reloadJournalEntriesTable, 400);
@@ -268,15 +342,24 @@
             document.getElementById('dateFrom').addEventListener('change', reloadJournalEntriesTable);
             document.getElementById('dateTo').addEventListener('change', reloadJournalEntriesTable);
 
-            // Add event listeners for new filters
             document.getElementById('sourceType').addEventListener('change', reloadJournalEntriesTable);
             document.getElementById('reversalStatus').addEventListener('change', reloadJournalEntriesTable);
+            document.getElementById('statusFilter').addEventListener('change', reloadJournalEntriesTable);
 
             reattachEventListeners();
 
-            // Export functionality (TODO)
-            document.getElementById('exportExcel').addEventListener('click', (e) => e.preventDefault());
-            document.getElementById('exportPdf').addEventListener('click', (e) => e.preventDefault());
+            // Export functionality
+            document.getElementById('exportExcel').addEventListener('click', function(e) {
+                e.preventDefault();
+                const params = getFilterParams();
+                window.location.href = `{{ route('journal-entries.export.excel') }}?${params}`;
+            });
+
+            document.getElementById('exportPdf').addEventListener('click', function(e) {
+                e.preventDefault();
+                const params = getFilterParams();
+                window.location.href = `{{ route('journal-entries.export.pdf') }}?${params}`;
+            });
         });
     </script>
 @endsection

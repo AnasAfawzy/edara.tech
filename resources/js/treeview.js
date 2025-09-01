@@ -28,6 +28,17 @@ window.initJsTree = function (accountsData) {
             contextmenu: {
                 items: function (node) {
                     const items = {
+                        statement: {
+                            label: statement_label,
+                            icon: "icon-base ti tabler-file-text",
+                            action: function () {
+                                let url = `/accounts/${node.id}/statement`;
+                                if (window.activeFinancialYear) {
+                                    url += `?start_date=${window.activeFinancialYear.start_date}&end_date=${window.activeFinancialYear.end_date}`;
+                                }
+                                window.location.href = url;
+                            }
+                        },
                         edit: {
                             label: edit_label,
                             icon: "icon-base ti tabler-edit",

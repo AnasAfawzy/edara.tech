@@ -77,8 +77,7 @@ class AttachmentService
 
         return DB::transaction(function () use ($attachment) {
             foreach ($attachment->files as $file) {
-                Storage::disk('public')->delete($file->file_path);
-                $file->delete();
+                $this->deleteSingleAttachmentFile($file);
             }
             return $attachment->delete();
         });
@@ -99,8 +98,7 @@ class AttachmentService
         }
 
         return DB::transaction(function () use ($file) {
-            Storage::disk('public')->delete($file->file_path);
-            $file->delete();
+            $this->deleteSingleAttachmentFile($file);
 
             // If the parent attachment group has no more files, delete it too
             if ($file->attachment && $file->attachment->files->count() === 0) {
@@ -108,6 +106,18 @@ class AttachmentService
             }
             return true;
         });
+    }
+
+    /**
+     * Deletes a single attachment file and its physical file from storage.
+     *
+     * @param AttachmentFile $file The attachment file instance to delete.
+     * @return void
+     */
+    private function deleteSingleAttachmentFile(AttachmentFile $file): void
+    {
+        Storage::disk('public')->delete($file->file_path);
+        $file->delete();
     }
 
     /**

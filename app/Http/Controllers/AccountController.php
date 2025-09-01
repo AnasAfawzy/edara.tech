@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\FinancialYearHelper;
 use App\Models\Account;
 use Illuminate\Http\Request;
 use App\Services\AccountService;
@@ -34,9 +35,12 @@ class AccountController extends Controller
             ->orWhere('has_sub', 1)
             ->get();
 
+        $activeFinancialYear = FinancialYearHelper::getActiveFinancialYear();
+
         return view('accounts.index', [
             'accounts'    => json_encode($jsTreeData, JSON_UNESCAPED_UNICODE),
-            'allAccounts' => $allAccounts
+            'allAccounts' => $allAccounts,
+            'activeFinancialYear' => $activeFinancialYear
         ]);
     }
 

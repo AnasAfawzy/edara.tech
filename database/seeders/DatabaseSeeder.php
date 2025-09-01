@@ -16,6 +16,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call([
+            JournalEntryPermissionsSeeder::class,
+        ]);
+
         // التأكد من وجود الدور admin وإنشاؤه إذا لم يكن موجوداً
         $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
 

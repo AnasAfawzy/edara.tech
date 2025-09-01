@@ -215,6 +215,9 @@
                                 <a href="{{ route('journal-entries.index') }}" class="btn btn-secondary">
                                     {{ __('Cancel') }}
                                 </a>
+                                <button type="button" class="btn btn-info" id="saveDraftBtn">
+                                    <i class="icon-base ti tabler-file-text me-1"></i>{{ __('Save as Draft') }}
+                                </button>
                                 <button type="submit" class="btn btn-primary" id="submitBtn">
                                     <i class="icon-base ti tabler-device-floppy me-1"></i>{{ __('Update Journal Entry') }}
                                 </button>
@@ -388,6 +391,10 @@
                 deletedFileIds.forEach(id => {
                     formData.append('deleted_attachments[]', id);
                 });
+
+                if (e.submitter && e.submitter.id === 'saveDraftBtn') {
+                    formData.append('is_draft', 'true');
+                }
 
                 fetch('{{ route('journal-entries.update', $journalEntry->id) }}', {
                         method: 'POST',

@@ -167,6 +167,9 @@
                                 <a href="{{ route('journal-entries.index') }}" class="btn btn-secondary">
                                     {{ __('Cancel') }}
                                 </a>
+                                <button type="submit" class="btn btn-info" id="saveDraftBtn">
+                                    <i class="icon-base ti tabler-file-text me-1"></i>{{ __('Save as Draft') }}
+                                </button>
                                 <button type="submit" class="btn btn-primary" id="submitBtn">
                                     <i class="icon-base ti tabler-device-floppy me-1"></i>{{ __('Save Journal Entry') }}
                                 </button>
@@ -309,29 +312,39 @@
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
 
-                const totalDebit = parseFloat(document.getElementById('totalDebit').textContent);
-                const totalCredit = parseFloat(document.getElementById('totalCredit').textContent);
+                const isDraft = e.submitter && e.submitter.id === 'saveDraftBtn';
 
-                if (Math.abs(totalDebit - totalCredit) > 0.01) {
-                    Swal.fire('{{ __('Error') }}', '{{ __('Journal entry must be balanced') }}',
-                        'error');
-                    return;
-                }
-                if (totalDebit === 0) {
-                    Swal.fire('{{ __('Error') }}',
-                        '{{ __('Journal entry must have at least one debit and credit entry') }}',
-                        'error');
-                    return;
+                if (!isDraft) {
+                    const totalDebit = parseFloat(document.getElementById('totalDebit').textContent);
+                    const totalCredit = parseFloat(document.getElementById('totalCredit').textContent);
+
+                    if (Math.abs(totalDebit - totalCredit) > 0.01) {
+                        Swal.fire('{{ __('Error') }}', '{{ __('Journal entry must be balanced') }}',
+                            'error');
+                        return;
+                    }
+                    if (totalDebit === 0) {
+                        Swal.fire('{{ __('Error') }}',
+                            '{{ __('Journal entry must have at least one debit and credit entry') }}',
+                            'error');
+                        return;
+                    }
                 }
 
-                const submitBtn = document.getElementById('submitBtn');
+                const submitBtn = e.submitter; // Use the actual submitter
+                const originalBtnHTML = submitBtn.innerHTML; // Save original content
                 submitBtn.disabled = true;
                 submitBtn.innerHTML =
                     `<span class="spinner-border spinner-border-sm me-2"></span>{{ __('Saving...') }}`;
 
+                let formData = new FormData(this);
+                if (isDraft) {
+                    formData.append('is_draft', 'true');
+                }
+
                 fetch('{{ route('journal-entries.store') }}', {
                         method: 'POST',
-                        body: new FormData(this),
+                        body: formData,
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -361,8 +374,7 @@
                     })
                     .finally(() => {
                         submitBtn.disabled = false;
-                        submitBtn.innerHTML =
-                            `<i class="icon-base ti tabler-device-floppy me-1"></i>{{ __('Save Journal Entry') }}`;
+                        submitBtn.innerHTML = originalBtnHTML;
                     });
             });
 

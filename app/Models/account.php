@@ -78,4 +78,37 @@ class Account extends Model
             'journal_entry_id'   // FK في JournalEntryDetail
         );
     }
+
+
+    /**
+     * العلاقة مع الأرصدة الافتتاحية
+     */
+    public function openingBalances()
+    {
+        return $this->hasMany(OpeningBalance::class);
+    }
+
+    /**
+     * الحصول على الرصيد الافتتاحي لسنة مالية معينة
+     */
+    public function getOpeningBalanceForYear($financialYearId)
+    {
+        return $this->openingBalances()
+            ->where('financial_year_id', $financialYearId)
+            ->first();
+    }
+
+    /**
+     * الحصول على الرصيد الافتتاحي للسنة المالية النشطة
+     */
+    public function getCurrentOpeningBalance()
+    {
+        $activeYear = FinancialYear::where('is_active', true)->first();
+
+        if (!$activeYear) {
+            return null;
+        }
+
+        return $this->getOpeningBalanceForYear($activeYear->id);
+    }
 }

@@ -50,6 +50,28 @@
                 @endif
             </li>
         @endforeach
+
+
+
+        <li class="menu-item">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base fa fa-chart-bar"></i>
+                <div>{{ __('Reports') }}</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item">
+                    <a href="{{ route('accounts.statement', ['account' => null]) }}" class="menu-link">
+                        <div>{{ __('Account Statement') }}</div>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="{{ route('opening-journal-entry.index') }}" class="menu-link">
+                        <i class="menu-icon icon-base fa fa-file-invoice"></i> {{-- Using a relevant icon --}}
+                        <div>{{ __('Opening Journal Entry') }}</div>
+                    </a>
+                </li>
+            </ul>
+        </li>
     </ul>
 </aside>
 

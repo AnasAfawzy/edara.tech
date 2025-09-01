@@ -10,9 +10,12 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Services\JournalEntryService;
 use App\Services\AttachmentService;
+use App\Exports\JournalEntriesExport;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use App\Services\UserService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
 
 class JournalEntryController extends Controller
 {
@@ -50,7 +53,10 @@ class JournalEntryController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
+        $isDraft = $request->has('is_draft') && $request->boolean('is_draft');
+        $status = $isDraft ? JournalEntry::STATUS_DRAFT : JournalEntry::STATUS_PENDING; // Define $status here
+
+        $rules = [
             'entry_date' => 'required|date',
             'description' => 'required|string|max:500',
             'currency_id' => 'required|exists:currencies,id',
@@ -63,33 +69,47 @@ class JournalEntryController extends Controller
             'reverses_entry_id' => 'nullable|exists:journal_entries,id',
             'attachments' => 'nullable|array',
             'attachments.*' => 'file|max:10240', // Max 10MB per file
-        ]);
+        ];
+
+        if ($isDraft) {
+            // Relax rules for draft
+            $rules['entry_date'] = 'nullable|date';
+            $rules['description'] = 'nullable|string|max:500';
+            $rules['currency_id'] = 'nullable|exists:currencies,id';
+            $rules['details'] = 'nullable|array'; // Details are optional for draft
+            $rules['details.*.account_id'] = 'nullable|exists:accounts,id';
+        }
+
+        $request->validate($rules);
 
         try {
             $totalDebit = 0;
             $totalCredit = 0;
 
-            foreach ($request->details as $index => $detail) {
-                $row = $index + 1;
-                if (empty($detail['debit']) && empty($detail['credit'])) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => __('Row #:row must have either a debit or credit amount', ['row' => $row])
-                    ], 422);
+            if($request->details){
+                foreach ($request->details as $index => $detail) {
+                    $row = $index + 1;
+                    if (!$isDraft && empty($detail['debit']) && empty($detail['credit'])) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => __('Row #:row must have either a debit or credit amount', ['row' => $row])
+                        ], 422);
+                    }
+    
+                    if (!empty($detail['debit']) && !empty($detail['credit'])) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => __('Row #:row can have either debit or credit, not both', ['row' => $row])
+                        ], 422);
+                    }
+    
+                    $totalDebit += floatval($detail['debit'] ?? 0);
+                    $totalCredit += floatval($detail['credit'] ?? 0);
                 }
-
-                if (!empty($detail['debit']) && !empty($detail['credit'])) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => __('Row #:row can have either debit or credit, not both', ['row' => $row])
-                    ], 422);
-                }
-
-                $totalDebit += floatval($detail['debit'] ?? 0);
-                $totalCredit += floatval($detail['credit'] ?? 0);
             }
 
-            if (abs($totalDebit - $totalCredit) > 0.01) {
+
+            if (!$isDraft && abs($totalDebit - $totalCredit) > 0.01) {
                 return response()->json([
                     'success' => false,
                     'message' => __('Journal entry must be balanced')
@@ -102,7 +122,8 @@ class JournalEntryController extends Controller
                 $data,
                 $request->details,
                 'manual',
-                0
+                0,
+                $status // Pass the status here
             );
 
             // Handle attachments
@@ -166,7 +187,9 @@ class JournalEntryController extends Controller
 
     public function update(Request $request, string $id): JsonResponse
     {
-        $request->validate([
+        $isDraft = $request->has('is_draft') && $request->boolean('is_draft');
+
+        $rules = [
             'entry_date' => 'required|date',
             'description' => 'required|string|max:500',
             'currency_id' => 'required|exists:currencies,id',
@@ -180,43 +203,60 @@ class JournalEntryController extends Controller
             'attachments.*' => 'file|max:10240', // Max 10MB per file
             'deleted_attachments' => 'nullable|array',
             'deleted_attachments.*' => 'integer|exists:attachment_files,id',
-        ]);
+        ];
+
+        if ($isDraft) {
+            // Relax rules for draft
+            $rules['entry_date'] = 'nullable|date';
+            $rules['description'] = 'nullable|string|max:500';
+            $rules['currency_id'] = 'nullable|exists:currencies,id';
+            $rules['details'] = 'nullable|array'; // Details are optional for draft
+            $rules['details.*.account_id'] = 'nullable|exists:accounts,id';
+        }
+
+        $request->validate($rules);
 
         try {
             $totalDebit = 0;
             $totalCredit = 0;
 
-            foreach ($request->details as $index => $detail) {
-                $row = $index + 1;
-                if (empty($detail['debit']) && empty($detail['credit'])) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => __('Row #:row must have either a debit or credit amount', ['row' => $row])
-                    ], 422);
+            if($request->details){
+                foreach ($request->details as $index => $detail) {
+                    $row = $index + 1;
+                    if (!$isDraft && empty($detail['debit']) && empty($detail['credit'])) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => __('Row #:row must have either a debit or credit amount', ['row' => $row])
+                        ], 422);
+                    }
+    
+                    if (!empty($detail['debit']) && !empty($detail['credit'])) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => __('Row #:row can have either debit or credit, not both', ['row' => $row])
+                        ], 422);
+                    }
+    
+                    $totalDebit += floatval($detail['debit'] ?? 0);
+                    $totalCredit += floatval($detail['credit'] ?? 0);
                 }
-
-                if (!empty($detail['debit']) && !empty($detail['credit'])) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => __('Row #:row can have either debit or credit, not both', ['row' => $row])
-                    ], 422);
-                }
-
-                $totalDebit += floatval($detail['debit'] ?? 0);
-                $totalCredit += floatval($detail['credit'] ?? 0);
             }
 
-            if (abs($totalDebit - $totalCredit) > 0.01) {
+            if (!$isDraft && abs($totalDebit - $totalCredit) > 0.01) {
                 return response()->json([
                     'success' => false,
                     'message' => __('Journal entry must be balanced')
                 ], 422);
             }
 
+            $isDraft = $request->has('is_draft') && $request->boolean('is_draft');
+            $status = $isDraft ? JournalEntry::STATUS_DRAFT : JournalEntry::STATUS_PENDING; // Assuming 'pending' is the default for non-drafts
+
             $journalEntry = $this->journalEntryService->updateEntry(
                 $id,
                 $request->only(['entry_date', 'description', 'currency_id']),
-                $request->details
+                $request->details,
+                $status // Pass status to updateEntry
             );
 
             // Handle new attachments
@@ -284,6 +324,7 @@ class JournalEntryController extends Controller
             $createdByUserId = $request->get('created_by_user_id'); // New filter
             $sourceType = $request->get('source_type'); // New filter
             $reversalStatus = $request->get('reversal_status'); // New filter: 'original', 'reversed', 'reversing'
+            $status = $request->get('status'); // New filter: 'draft', 'pending', 'approved', 'posted', 'reversed'
 
             $query = JournalEntry::with(['currency', 'financialYear', 'details.account', 'details.costCenter', 'creator', 'updater']);
 
@@ -323,6 +364,10 @@ class JournalEntryController extends Controller
                 } elseif ($reversalStatus === 'reversing') {
                     $query->whereNotNull('reversed_by_entry_id');
                 }
+            }
+
+            if (!empty($status)) {
+                $query->where('status', $status);
             }
 
             $journalEntries = $query->orderBy('entry_date', 'desc')->paginate($perPage);
@@ -398,6 +443,62 @@ class JournalEntryController extends Controller
         $journalEntry->setRelation('details', $reversedDetails);
 
         return $this->create($journalEntry);
+    }
+
+    public function duplicate(string $id)
+    {
+        $newJournalEntry = $this->journalEntryService->duplicateEntry($id);
+        
+        // Redirect to the create view with the new (unsaved) entry data
+        return $this->create($newJournalEntry);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $filename = 'journal-entries-' . now()->format('Y-m-d_H-i') . '.xlsx';
+        return Excel::download(new JournalEntriesExport($request), $filename);
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $export = new JournalEntriesExport($request);
+        $journalEntries = $export->query()->get();
+
+        $pdf = Pdf::loadView('JournalEntry.exports.pdf', compact('journalEntries'));
+        $pdf->setOption(['dpi' => 150, 'defaultFont' => 'dejavu sans']);
+        
+        $filename = 'journal-entries-' . now()->format('Y-m-d_H-i') . '.pdf';
+        return $pdf->stream($filename);
+    }
+
+    public function submit(Request $request, $id)
+    {
+        try {
+            $this->journalEntryService->submitForApproval($id);
+            return response()->json(['success' => true, 'message' => __('Journal entry submitted for approval.')]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function approve(Request $request, $id)
+    {
+        try {
+            $this->journalEntryService->approveEntry($id);
+            return response()->json(['success' => true, 'message' => __('Journal entry approved.')]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function reject(Request $request, $id)
+    {
+        try {
+            $this->journalEntryService->rejectEntry($id);
+            return response()->json(['success' => true, 'message' => __('Journal entry rejected.')]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
     }
 
     public function downloadAttachmentFile(int $fileId)
