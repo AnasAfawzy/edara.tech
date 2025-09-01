@@ -19,7 +19,8 @@
                 <tbody>
                     @forelse ($transactions as $transaction)
                         <tr>
-                            <td class="text-center">{{ $transaction->transaction_date->format('Y-m-d') }}</td>
+                            <td class="text-center">
+                                {{ \Carbon\Carbon::parse($transaction->transaction_date)->format('Y-m-d') }}</td>
                             <td class="text-center">
                                 @if ($transaction->journal_entry_id)
                                     <button type="button" class="btn btn-link p-0 view-journal-entry"
@@ -50,7 +51,19 @@
                     <tr>
                         <td colspan="5" class="text-center"><strong>{{ __('Closing Balance') }}</strong></td>
                         <td class="text-center">
-                            <strong>{{ number_format($transactions->isEmpty() ? $openingBalance : $transactions->last()->balance, 2) }}</strong>
+                            <strong>
+                                @if ($transactions->isEmpty())
+                                    {{ number_format($openingBalance, 2) }}
+                                @else
+                                    @php
+                                        // حساب الرصيد الختامي = الرصيد الافتتاحي + صافي الحركات
+                                        $lastTransaction = $transactions->last();
+                                        $netMovement = $totalDebit - $totalCredit;
+                                        $closingBalance = $openingBalance + $netMovement;
+                                    @endphp
+                                    {{ number_format($closingBalance, 2) }}
+                                @endif
+                            </strong>
                         </td>
                     </tr>
                 </tfoot>

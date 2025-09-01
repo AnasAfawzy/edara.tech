@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Account;
+use App\Models\OpeningBalance;
+use App\Helpers\FinancialYearHelper;
 use App\Repositories\Interfaces\AccountStatementRepositoryInterface;
 
 class AccountStatementService
@@ -16,17 +18,14 @@ class AccountStatementService
 
     public function getStatement(Account $account, ?string $startDate, ?string $endDate)
     {
-        $openingBalance = 0;
-        if ($startDate) {
-            $lastTransaction = $this->repository->getLastTransactionBefore($account, $startDate);
-            if ($lastTransaction) {
-                $openingBalance = $lastTransaction->balance;
-            }
-        }
+        // 1. حساب الرصيد الافتتاحي الصحيح
+        $openingBalance = $this->calculateOpeningBalance($account, $startDate);
 
+        // 2. الحصول على المعاملات والمجاميع
         $transactions = $this->repository->getTransactions($account, $startDate, $endDate);
         $totals = $this->repository->getTotals($account, $startDate, $endDate);
 
+        // 3. حساب الرصيد الختامي
         $closingBalance = $openingBalance + $totals['total_debit'] - $totals['total_credit'];
 
         return [
@@ -39,5 +38,54 @@ class AccountStatementService
             'startDate' => $startDate,
             'endDate' => $endDate,
         ];
+    }
+
+    /**
+     * حساب الرصيد الافتتاحي الصحيح
+     */
+    private function calculateOpeningBalance(Account $account, ?string $startDate): float
+    {
+        // إذا لم يتم تحديد تاريخ بداية، ابدأ من الرصيد الافتتاحي فقط
+        if (!$startDate) {
+            return $this->getAccountOpeningBalance($account);
+        }
+
+        // 1. الحصول على الرصيد الافتتاحي من جدول opening_balances
+        $initialOpeningBalance = $this->getAccountOpeningBalance($account);
+
+        // 2. الحصول على آخر معاملة قبل تاريخ البداية
+        $lastTransaction = $this->repository->getLastTransactionBefore($account, $startDate);
+
+        // إذا لم توجد معاملات قبل التاريخ، استخدم الرصيد الافتتاحي فقط
+        if (!$lastTransaction) {
+            return $initialOpeningBalance;
+        }
+
+        // إذا وجدت معاملات، استخدم آخر رصيد (يفترض أنه يتضمن الرصيد الافتتاحي)
+        return $lastTransaction->balance;
+    }
+
+    /**
+     * الحصول على الرصيد الافتتاحي للحساب من جدول opening_balances
+     */
+    private function getAccountOpeningBalance(Account $account): float
+    {
+        // الحصول على السنة المالية الحالية أو المحددة
+        $currentFinancialYear = FinancialYearHelper::getActiveFinancialYear();
+
+        if (!$currentFinancialYear) {
+            return 0;
+        }
+
+        $openingBalance = OpeningBalance::where('account_id', $account->id)
+            ->where('financial_year_id', $currentFinancialYear->id)
+            ->first();
+
+        if (!$openingBalance) {
+            return 0;
+        }
+
+        // الرصيد الافتتاحي = المدين - الدائن
+        return $openingBalance->debit_balance - $openingBalance->credit_balance;
     }
 }

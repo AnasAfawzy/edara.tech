@@ -45,7 +45,6 @@ class AccountStatementController extends Controller
 
         // Add account to statementData for the view
         $statementData['account'] = $account;
-
         $detailsHtml = view('accounts.partials.statement_details', $statementData)->render();
 
 
