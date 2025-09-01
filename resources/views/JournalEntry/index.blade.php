@@ -14,16 +14,18 @@
                 <div class="row g-3">
                     <div class="col-md-12">
                         <label for="search" class="form-label">{{ __('Search') }}</label>
-                        <input type="text" name="search" id="search" value="{{ request('search') }}" class="form-control"
-                            placeholder="{{ __('Search by number, description, account...') }}">
+                        <input type="text" name="search" id="search" value="{{ request('search') }}"
+                            class="form-control" placeholder="{{ __('Search by number, description, account...') }}">
                     </div>
                     <div class="col-md-3">
                         <label for="dateFrom" class="form-label">{{ __('From Date') }}</label>
-                        <input type="date" name="date_from" id="dateFrom" value="{{ request('date_from') }}" class="form-control">
+                        <input type="date" name="date_from" id="dateFrom" value="{{ request('date_from') }}"
+                            class="form-control">
                     </div>
                     <div class="col-md-3">
                         <label for="dateTo" class="form-label">{{ __('To Date') }}</label>
-                        <input type="date" name="date_to" id="dateTo" value="{{ request('date_to') }}" class="form-control">
+                        <input type="date" name="date_to" id="dateTo" value="{{ request('date_to') }}"
+                            class="form-control">
                     </div>
                     <div class="col-md-2">
                         <label for="statusFilter" class="form-label">{{ __('Entry Status') }}</label>
@@ -136,7 +138,8 @@
                     <!-- Content will be loaded here -->
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Close') }}</button>
+                    <button type="button" class="btn btn-secondary"
+                        data-bs-dismiss="modal">{{ __('Close') }}</button>
                 </div>
             </div>
         </div>
@@ -254,15 +257,21 @@
                                     .then(response => response.json())
                                     .then(data => {
                                         if (data.success) {
-                                            Swal.fire('{{ __('Deleted!') }}', data.message, 'success');
+                                            Swal.fire('{{ __('Deleted!') }}', data
+                                                .message, 'success');
                                             reloadJournalEntriesTable();
                                         } else {
-                                            Swal.fire('{{ __('Error') }}', data.message || '{{ __('Failed to delete') }}', 'error');
+                                            Swal.fire('{{ __('Error') }}', data
+                                                .message ||
+                                                '{{ __('Failed to delete') }}',
+                                                'error');
                                         }
                                     })
                                     .catch(error => {
                                         console.error('Error:', error);
-                                        Swal.fire('{{ __('Error') }}', '{{ __('An error occurred') }}', 'error');
+                                        Swal.fire('{{ __('Error') }}',
+                                            '{{ __('An error occurred') }}',
+                                            'error');
                                     });
                             }
                         });
@@ -276,22 +285,23 @@
                         const entryId = this.dataset.id;
                         const action = this.dataset.action;
 
-                        let confirmTitle = '{{ __("Are you sure?") }}';
-                        let confirmText = `{{ __("You are about to") }} ${action} {{ __("this entry.") }}`;
-                        let confirmButton = '{{ __("Yes") }}';
+                        // منع الضغط المتكرر
+                        if (this.disabled) return;
 
-                        if (action === 'submit') {
-                            confirmTitle = '{{ __("Submit for Approval?") }}';
-                            confirmText = '{{ __("This will submit the journal entry for approval.") }}';
-                            confirmButton = '{{ __("Yes, submit it!") }}';
-                        } else if (action === 'approve') {
-                            confirmTitle = '{{ __("Approve Entry?") }}';
-                            confirmText = '{{ __("This will approve the journal entry.") }}';
-                            confirmButton = '{{ __("Yes, approve it!") }}';
-                        } else if (action === 'reject') {
-                            confirmTitle = '{{ __("Reject Entry?") }}';
-                            confirmText = '{{ __("This will reject the journal entry and return it to draft status.") }}';
-                            confirmButton = '{{ __("Yes, reject it!") }}';
+                        // حفظ النص الأصلي للزر
+                        if (!this.dataset.originalHtml) {
+                            this.dataset.originalHtml = this.innerHTML;
+                        }
+
+                        let confirmTitle = '{{ __('Are you sure?') }}';
+                        let confirmText =
+                            `{{ __('You are about to') }} ${action} {{ __('this entry.') }}`;
+                        let confirmButton = '{{ __('Yes') }}';
+
+                        if (action === 'approve') {
+                            confirmTitle = '{{ __('Approve Entry?') }}';
+                            confirmText = '{{ __('This will approve the journal entry.') }}';
+                            confirmButton = '{{ __('Yes, approve it!') }}';
                         }
 
                         Swal.fire({
@@ -302,28 +312,70 @@
                             confirmButtonColor: '#3085d6',
                             cancelButtonColor: '#d33',
                             confirmButtonText: confirmButton,
-                            cancelButtonText: '{{ __("Cancel") }}'
+                            cancelButtonText: '{{ __('Cancel') }}'
                         }).then((result) => {
                             if (result.isConfirmed) {
+                                // تعطيل الزر أثناء المعالجة
+                                this.disabled = true;
+                                this.innerHTML =
+                                    '<span class="spinner-border spinner-border-sm me-1"></span>{{ __('Processing...') }}';
+
+                                // إضافة timeout أقصر للاختبار
+                                const timeoutId = setTimeout(() => {
+                                    console.error('Request timeout');
+                                    Swal.fire('{{ __('Error') }}',
+                                        '{{ __('Request timeout. Please check the logs.') }}',
+                                        'error');
+                                    this.disabled = false;
+                                    this.innerHTML = this.dataset.originalHtml;
+                                }, 10000); // 10 seconds timeout للاختبار
+
+                                console.log(
+                                    `Starting ${action} request for entry ${entryId}`);
+
                                 fetch(`{{ url('journal-entries') }}/${entryId}/${action}`, {
                                         method: 'POST',
                                         headers: {
                                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                            'X-Requested-With': 'XMLHttpRequest'
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                            'Content-Type': 'application/json'
                                         }
                                     })
-                                    .then(response => response.json())
+                                    .then(response => {
+                                        clearTimeout(timeoutId);
+                                        console.log(
+                                            `Response status: ${response.status}`);
+
+                                        if (!response.ok) {
+                                            throw new Error(
+                                                `HTTP error! status: ${response.status}`
+                                                );
+                                        }
+                                        return response.json();
+                                    })
                                     .then(data => {
+                                        console.log('Response data:', data);
                                         if (data.success) {
-                                            Swal.fire('{{ __("Success!") }}', data.message, 'success');
+                                            Swal.fire('{{ __('Success!') }}', data
+                                                .message, 'success');
                                             reloadJournalEntriesTable();
                                         } else {
-                                            Swal.fire('{{ __("Error") }}', data.message || '{{ __("An error occurred") }}', 'error');
+                                            Swal.fire('{{ __('Error') }}', data
+                                                .message ||
+                                                '{{ __('An error occurred') }}',
+                                                'error');
                                         }
                                     })
                                     .catch(error => {
-                                        console.error('Error:', error);
-                                        Swal.fire('{{ __("Error") }}', '{{ __("An error occurred") }}', 'error');
+                                        clearTimeout(timeoutId);
+                                        console.error('Request error:', error);
+                                        Swal.fire('{{ __('Error') }}',
+                                            `{{ __('Network error: ') }}${error.message}`,
+                                            'error');
+                                    })
+                                    .finally(() => {
+                                        this.disabled = false;
+                                        this.innerHTML = this.dataset.originalHtml;
                                     });
                             }
                         });

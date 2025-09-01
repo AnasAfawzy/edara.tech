@@ -2,20 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Account;
 use App\Models\Currency;
 use App\Models\CostCenter;
 use App\Models\JournalEntry;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use App\Services\JournalEntryService;
-use App\Services\AttachmentService;
-use App\Exports\JournalEntriesExport;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Storage;
 use App\Services\UserService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
+use App\Services\AttachmentService;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\JournalEntriesExport;
+use App\Services\JournalEntryService;
+use Illuminate\Support\Facades\Storage;
 
 class JournalEntryController extends Controller
 {
@@ -44,8 +45,7 @@ class JournalEntryController extends Controller
         $costCenters = CostCenter::all();
 
         if ($journalEntry && $journalEntry->exists === false) {
-            // This is a new entry being reversed, so we pass it to the view
-            return view('JournalEntry.create', compact('currencies', 'accounts', 'costCenters', 'journalEntry'));
+            $journalEntry = null;
         }
 
         return view('JournalEntry.create', compact('currencies', 'accounts', 'costCenters'));
@@ -54,94 +54,47 @@ class JournalEntryController extends Controller
     public function store(Request $request): JsonResponse
     {
         $isDraft = $request->has('is_draft') && $request->boolean('is_draft');
-        $status = $isDraft ? JournalEntry::STATUS_DRAFT : JournalEntry::STATUS_PENDING; // Define $status here
+        $status = $isDraft ? JournalEntry::STATUS_DRAFT : JournalEntry::STATUS_PENDING;
 
         $rules = [
             'entry_date' => 'required|date',
-            'description' => 'required|string|max:500',
+            'description' => 'required|string|max:255',
             'currency_id' => 'required|exists:currencies,id',
-            'details' => 'required|array|min:2',
+            'details' => 'required|array|min:1',
             'details.*.account_id' => 'required|exists:accounts,id',
+            'details.*.statement' => 'nullable|string|max:255',
             'details.*.debit' => 'nullable|numeric|min:0',
             'details.*.credit' => 'nullable|numeric|min:0',
             'details.*.cost_center_id' => 'nullable|exists:cost_centers,id',
-            'details.*.statement' => 'nullable|string|max:255',
-            'reverses_entry_id' => 'nullable|exists:journal_entries,id',
-            'attachments' => 'nullable|array',
-            'attachments.*' => 'file|max:10240', // Max 10MB per file
         ];
 
         if ($isDraft) {
-            // Relax rules for draft
-            $rules['entry_date'] = 'nullable|date';
-            $rules['description'] = 'nullable|string|max:500';
-            $rules['currency_id'] = 'nullable|exists:currencies,id';
-            $rules['details'] = 'nullable|array'; // Details are optional for draft
-            $rules['details.*.account_id'] = 'nullable|exists:accounts,id';
+            $rules['details.*.debit'] = 'nullable|numeric';
+            $rules['details.*.credit'] = 'nullable|numeric';
         }
 
         $request->validate($rules);
 
         try {
-            $totalDebit = 0;
-            $totalCredit = 0;
-
-            if($request->details){
-                foreach ($request->details as $index => $detail) {
-                    $row = $index + 1;
-                    if (!$isDraft && empty($detail['debit']) && empty($detail['credit'])) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => __('Row #:row must have either a debit or credit amount', ['row' => $row])
-                        ], 422);
-                    }
-    
-                    if (!empty($detail['debit']) && !empty($detail['credit'])) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => __('Row #:row can have either debit or credit, not both', ['row' => $row])
-                        ], 422);
-                    }
-    
-                    $totalDebit += floatval($detail['debit'] ?? 0);
-                    $totalCredit += floatval($detail['credit'] ?? 0);
-                }
-            }
-
-
-            if (!$isDraft && abs($totalDebit - $totalCredit) > 0.01) {
-                return response()->json([
-                    'success' => false,
-                    'message' => __('Journal entry must be balanced')
-                ], 422);
-            }
-
-            $data = $request->only(['entry_date', 'description', 'currency_id', 'reverses_entry_id']);
-
             $journalEntry = $this->journalEntryService->createEntry(
-                $data,
-                $request->details,
-                'manual',
+                $request->only(['entry_date', 'description', 'currency_id']),
+                $request->input('details'),
+                JournalEntry::SOURCE_MANUAL,
                 0,
-                $status // Pass the status here
+                $status
             );
-
-            // Handle attachments
-            if ($request->hasFile('attachments')) {
-                $this->attachmentService->uploadAttachments($journalEntry, $request->file('attachments'), __('Journal Entry Attachments'));
-            }
 
             return response()->json([
                 'success' => true,
-                'message' => __('Journal entry created successfully'),
+                'message' => __('Journal entry created successfully.'),
                 'data' => $journalEntry
             ]);
         } catch (\Exception $e) {
+            Log::error('Error creating journal entry: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
-                'trace' => config('app.debug') ? $e->getTraceAsString() : null
-            ], 500);
+                'message' => $e->getMessage()
+            ], 422);
         }
     }
 
@@ -150,20 +103,17 @@ class JournalEntryController extends Controller
         $journalEntry = $this->journalEntryService->getEntryWithDetails($id);
 
         if (!$journalEntry) {
-            if (request()->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => __('Journal entry not found')
-                ], 404);
-            }
-            abort(404);
+            abort(404, __('Journal entry not found.'));
         }
 
-        // Load attachments for the view
         $attachments = $this->attachmentService->getAttachments($journalEntry);
 
         if (request()->wantsJson() || request()->ajax()) {
-            return view('JournalEntry.partials.show', compact('journalEntry', 'attachments'))->render();
+            return response()->json([
+                'success' => true,
+                'data' => $journalEntry,
+                'attachments' => $attachments
+            ]);
         }
 
         return view('JournalEntry.show', compact('journalEntry', 'attachments'));
@@ -174,7 +124,7 @@ class JournalEntryController extends Controller
         $journalEntry = $this->journalEntryService->getEntryWithDetails($id);
 
         if (!$journalEntry) {
-            abort(404);
+            abort(404, __('Journal entry not found.'));
         }
 
         $currencies = Currency::get();
@@ -191,343 +141,245 @@ class JournalEntryController extends Controller
 
         $rules = [
             'entry_date' => 'required|date',
-            'description' => 'required|string|max:500',
+            'description' => 'required|string|max:255',
             'currency_id' => 'required|exists:currencies,id',
-            'details' => 'required|array|min:2',
+            'details' => 'required|array|min:1',
             'details.*.account_id' => 'required|exists:accounts,id',
+            'details.*.statement' => 'nullable|string|max:255',
             'details.*.debit' => 'nullable|numeric|min:0',
             'details.*.credit' => 'nullable|numeric|min:0',
             'details.*.cost_center_id' => 'nullable|exists:cost_centers,id',
-            'details.*.statement' => 'nullable|string|max:255',
-            'attachments' => 'nullable|array',
-            'attachments.*' => 'file|max:10240', // Max 10MB per file
-            'deleted_attachments' => 'nullable|array',
-            'deleted_attachments.*' => 'integer|exists:attachment_files,id',
         ];
 
         if ($isDraft) {
-            // Relax rules for draft
-            $rules['entry_date'] = 'nullable|date';
-            $rules['description'] = 'nullable|string|max:500';
-            $rules['currency_id'] = 'nullable|exists:currencies,id';
-            $rules['details'] = 'nullable|array'; // Details are optional for draft
-            $rules['details.*.account_id'] = 'nullable|exists:accounts,id';
+            $rules['details.*.debit'] = 'nullable|numeric';
+            $rules['details.*.credit'] = 'nullable|numeric';
         }
 
         $request->validate($rules);
 
         try {
-            $totalDebit = 0;
-            $totalCredit = 0;
-
-            if($request->details){
-                foreach ($request->details as $index => $detail) {
-                    $row = $index + 1;
-                    if (!$isDraft && empty($detail['debit']) && empty($detail['credit'])) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => __('Row #:row must have either a debit or credit amount', ['row' => $row])
-                        ], 422);
-                    }
-    
-                    if (!empty($detail['debit']) && !empty($detail['credit'])) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => __('Row #:row can have either debit or credit, not both', ['row' => $row])
-                        ], 422);
-                    }
-    
-                    $totalDebit += floatval($detail['debit'] ?? 0);
-                    $totalCredit += floatval($detail['credit'] ?? 0);
-                }
-            }
-
-            if (!$isDraft && abs($totalDebit - $totalCredit) > 0.01) {
-                return response()->json([
-                    'success' => false,
-                    'message' => __('Journal entry must be balanced')
-                ], 422);
-            }
-
-            $isDraft = $request->has('is_draft') && $request->boolean('is_draft');
-            $status = $isDraft ? JournalEntry::STATUS_DRAFT : JournalEntry::STATUS_PENDING; // Assuming 'pending' is the default for non-drafts
+            $status = $isDraft ? JournalEntry::STATUS_DRAFT : null;
 
             $journalEntry = $this->journalEntryService->updateEntry(
                 $id,
                 $request->only(['entry_date', 'description', 'currency_id']),
-                $request->details,
-                $status // Pass status to updateEntry
+                $request->input('details'),
+                $status
             );
-
-            // Handle new attachments
-            if ($request->hasFile('attachments')) {
-                $this->attachmentService->uploadAttachments($journalEntry, $request->file('attachments'), __('Journal Entry Attachments'));
-            }
-
-            // Handle deleted attachments
-            if ($request->has('deleted_attachments')) {
-                foreach ($request->input('deleted_attachments') as $fileId) {
-                    $this->attachmentService->deleteAttachmentFile($fileId);
-                }
-            }
 
             return response()->json([
                 'success' => true,
-                'message' => __('Journal entry updated successfully'),
+                'message' => __('Journal entry updated successfully.'),
                 'data' => $journalEntry
             ]);
         } catch (\Exception $e) {
+            Log::error('Error updating journal entry: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
-                'trace' => config('app.debug') ? $e->getTraceAsString() : null
-            ], 500);
+                'message' => $e->getMessage()
+            ], 422);
         }
     }
 
     public function destroy(string $id): JsonResponse
     {
         try {
-            $journalEntry = JournalEntry::find($id);
-
-            if (!$journalEntry) {
-                return response()->json(['success' => false, 'message' => __('Journal entry not found')], 404);
-            }
-
-            // Optionally delete attachments when journal entry is deleted
-            foreach ($journalEntry->attachments as $attachment) {
-                $this->attachmentService->deleteAttachment($attachment->id);
-            }
-
             $this->journalEntryService->deleteEntry($id);
 
             return response()->json([
                 'success' => true,
-                'message' => __('Journal entry deleted successfully')
+                'message' => __('Journal entry deleted successfully.')
             ]);
         } catch (\Exception $e) {
+            Log::error('Error deleting journal entry: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
-                'trace' => config('app.debug') ? $e->getTraceAsString() : null
-            ], 500);
+                'message' => $e->getMessage()
+            ], 422);
         }
-    }
-
-    public function search(Request $request)
-    {
-        try {
-            $search = $request->get('search');
-            $dateFrom = $request->get('date_from');
-            $dateTo = $request->get('date_to');
-            $perPage = $request->get('per_page', 25);
-            $createdByUserId = $request->get('created_by_user_id'); // New filter
-            $sourceType = $request->get('source_type'); // New filter
-            $reversalStatus = $request->get('reversal_status'); // New filter: 'original', 'reversed', 'reversing'
-            $status = $request->get('status'); // New filter: 'draft', 'pending', 'approved', 'posted', 'reversed'
-
-            $query = JournalEntry::with(['currency', 'financialYear', 'details.account', 'details.costCenter', 'creator', 'updater']);
-
-            if (!empty($search)) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('description', 'LIKE', "%{$search}%")
-                        ->orWhere('entry_number', 'LIKE', "%{$search}%")
-                        ->orWhereHas('details.account', function ($accountQuery) use ($search) {
-                            $accountQuery->where('name', 'LIKE', "%{$search}%")
-                                ->orWhere('code', 'LIKE', "%{$search}%");
-                        });
-                });
-            }
-
-            if (!empty($dateFrom)) {
-                $query->whereDate('entry_date', '>=', $dateFrom);
-            }
-
-            if (!empty($dateTo)) {
-                $query->whereDate('entry_date', '<=', $dateTo);
-            }
-
-            // New filters
-            if (!empty($createdByUserId)) {
-                $query->where('created_by', $createdByUserId);
-            }
-
-            if (!empty($sourceType)) {
-                $query->where('source_type', $sourceType);
-            }
-
-            if (!empty($reversalStatus)) {
-                if ($reversalStatus === 'original') {
-                    $query->whereNull('reverses_entry_id')->whereNull('reversed_by_entry_id');
-                } elseif ($reversalStatus === 'reversed') {
-                    $query->whereNotNull('reverses_entry_id');
-                } elseif ($reversalStatus === 'reversing') {
-                    $query->whereNotNull('reversed_by_entry_id');
-                }
-            }
-
-            if (!empty($status)) {
-                $query->where('status', $status);
-            }
-
-            $journalEntries = $query->orderBy('entry_date', 'desc')->paginate($perPage);
-
-            $html = view('JournalEntry.partials.table', compact('journalEntries'))->render();
-
-            return response()->json([
-                'success' => true,
-                'html' => $html,
-                'pagination' => $journalEntries->appends($request->all())->links()->render()
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error occurred while searching: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function searchAccounts(Request $request)
-    {
-        $searchTerm = $request->get('q');
-        $accounts = Account::where('slave', 1)->where(function ($query) use ($searchTerm) {
-            $query->where('name', 'LIKE', '%' . $searchTerm . '%')
-                ->orWhere('code', 'LIKE', '%' . $searchTerm . '%');
-        })
-            ->limit(20)
-            ->get([
-                'id',
-                'name as text',
-                'code'
-            ]);
-
-        return response()->json($accounts);
-    }
-
-    public function searchCostCenters(Request $request)
-    {
-        $searchTerm = $request->get('q');
-        $costCenters = CostCenter::where('name', 'LIKE', '%' . $searchTerm . '%')
-            ->orWhere('code', 'LIKE', '%' . $searchTerm . '%')
-            ->limit(20)
-            ->get([
-                'id',
-                'name as text',
-                'code'
-            ]);
-
-        return response()->json($costCenters);
-    }
-
-    public function reverse(string $id)
-    {
-        $originalEntry = $this->journalEntryService->getEntryWithDetails($id);
-
-        if (!$originalEntry || $originalEntry->reversed_by_entry_id || $originalEntry->reverses_entry_id) {
-            return redirect()->route('journal-entries.index')->with('error', __('This entry cannot be reversed.'));
-        }
-
-        $journalEntry = new JournalEntry();
-        $journalEntry->entry_date = Carbon::now();
-        $journalEntry->description = __('Reversing entry for entry #') . $originalEntry->entry_number;
-        $journalEntry->currency_id = $originalEntry->currency_id;
-        $journalEntry->reverses_entry_id = $originalEntry->id; // Set the link to the original entry
-
-        $reversedDetails = $originalEntry->details->map(function ($detail) {
-            $newDetail = $detail->replicate();
-            $newDetail->debit = $detail->credit;
-            $newDetail->credit = $detail->debit;
-            return $newDetail;
-        });
-
-        $journalEntry->setRelation('details', $reversedDetails);
-
-        return $this->create($journalEntry);
-    }
-
-    public function duplicate(string $id)
-    {
-        $newJournalEntry = $this->journalEntryService->duplicateEntry($id);
-        
-        // Redirect to the create view with the new (unsaved) entry data
-        return $this->create($newJournalEntry);
-    }
-
-    public function exportExcel(Request $request)
-    {
-        $filename = 'journal-entries-' . now()->format('Y-m-d_H-i') . '.xlsx';
-        return Excel::download(new JournalEntriesExport($request), $filename);
-    }
-
-    public function exportPdf(Request $request)
-    {
-        $export = new JournalEntriesExport($request);
-        $journalEntries = $export->query()->get();
-
-        $pdf = Pdf::loadView('JournalEntry.exports.pdf', compact('journalEntries'));
-        $pdf->setOption(['dpi' => 150, 'defaultFont' => 'dejavu sans']);
-        
-        $filename = 'journal-entries-' . now()->format('Y-m-d_H-i') . '.pdf';
-        return $pdf->stream($filename);
     }
 
     public function submit(Request $request, $id)
     {
         try {
-            $this->journalEntryService->submitForApproval($id);
-            return response()->json(['success' => true, 'message' => __('Journal entry submitted for approval.')]);
+            $journalEntry = $this->journalEntryService->submitForApproval($id);
+            return response()->json([
+                'success' => true,
+                'message' => __('Journal entry submitted for approval.')
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            Log::error('Error submitting journal entry: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
         }
     }
 
     public function approve(Request $request, $id)
     {
+        Log::info("Controller: Starting approval process for journal entry: {$id}");
+
         try {
-            $this->journalEntryService->approveEntry($id);
-            return response()->json(['success' => true, 'message' => __('Journal entry approved.')]);
+            $journalEntry = JournalEntry::find($id);
+            if (!$journalEntry) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Journal entry not found')
+                ], 404);
+            }
+
+            if ($journalEntry->status !== JournalEntry::STATUS_PENDING) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Only pending entries can be approved')
+                ], 422);
+            }
+
+            // اعتماد القيد أولاً
+            $journalEntry = $this->journalEntryService->approveEntry($id);
+
+            // ترحيل القيد مباشرة (زي الأرصدة الافتتاحية)
+            $journalEntry = $this->journalEntryService->postEntry($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('Journal entry approved and posted successfully.')
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            Log::error("Controller: Error approving journal entry {$id}: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+
+    public function post(Request $request, $id)
+    {
+        try {
+            $journalEntry = $this->journalEntryService->postEntry($id);
+            return response()->json([
+                'success' => true,
+                'message' => __('Journal entry posted successfully.')
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error posting journal entry: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
         }
     }
 
     public function reject(Request $request, $id)
     {
         try {
-            $this->journalEntryService->rejectEntry($id);
-            return response()->json(['success' => true, 'message' => __('Journal entry rejected.')]);
+            $journalEntry = $this->journalEntryService->rejectEntry($id);
+            return response()->json([
+                'success' => true,
+                'message' => __('Journal entry rejected successfully.')
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            Log::error('Error rejecting journal entry: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
         }
     }
 
-    public function downloadAttachmentFile(int $fileId)
-    {
-        $file = $this->attachmentService->getAttachmentFile($fileId);
-
-        if (!$file) {
-            abort(404);
-        }
-
-        return Storage::disk('public')->download($file->file_path, $file->file_name);
-    }
-
-    public function deleteAttachment(int $attachmentId): JsonResponse
+    public function duplicate(string $id)
     {
         try {
-            $this->attachmentService->deleteAttachment($attachmentId);
-            return response()->json(['success' => true, 'message' => __('Attachment deleted successfully')]);
+            $journalEntry = $this->journalEntryService->duplicateEntry($id);
+            return redirect()->route('journal-entries.edit', $journalEntry->id)
+                ->with('success', __('Journal entry duplicated successfully.'));
         } catch (\Exception $e) {
+            Log::error('Error duplicating journal entry: ' . $e->getMessage());
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
-    public function deleteAttachmentFile(int $fileId): JsonResponse
+    public function search(Request $request)
     {
         try {
-            $this->attachmentService->deleteAttachmentFile($fileId);
-            return response()->json(['success' => true, 'message' => __('Attachment file deleted successfully')]);
+            $query = JournalEntry::with(['currency', 'financialYear']);
+
+            if ($request->filled('search')) {
+                $search = $request->input('search');
+                $query->where(function ($q) use ($search) {
+                    $q->where('description', 'LIKE', "%{$search}%")
+                        ->orWhere('entry_number', 'LIKE', "%{$search}%")
+                        ->orWhere('reference_number', 'LIKE', "%{$search}%");
+                });
+            }
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->input('status'));
+            }
+
+            if ($request->filled('source_type')) {
+                $query->where('source_type', $request->input('source_type'));
+            }
+
+            if ($request->filled('date_from')) {
+                $query->whereDate('entry_date', '>=', $request->input('date_from'));
+            }
+
+            if ($request->filled('date_to')) {
+                $query->whereDate('entry_date', '<=', $request->input('date_to'));
+            }
+
+            $perPage = $request->input('per_page', 25);
+            $journalEntries = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+            return view('JournalEntry.partials.table', compact('journalEntries'))->render();
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            Log::error('Error searching journal entries: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function exportExcel(Request $request)
+    {
+        try {
+            $query = JournalEntry::with(['currency', 'financialYear', 'details.account']);
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->input('status'));
+            }
+
+            $journalEntries = $query->get();
+
+            return Excel::download(new JournalEntriesExport($journalEntries), 'journal-entries-' . date('Y-m-d') . '.xlsx');
+        } catch (\Exception $e) {
+            Log::error('Error exporting journal entries: ' . $e->getMessage());
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function exportPdf(Request $request)
+    {
+        try {
+            $query = JournalEntry::with(['currency', 'financialYear', 'details.account']);
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->input('status'));
+            }
+
+            $journalEntries = $query->get();
+
+            $pdf = Pdf::loadView('JournalEntry.exports.pdf', compact('journalEntries'));
+
+            return $pdf->download('journal-entries-' . date('Y-m-d') . '.pdf');
+        } catch (\Exception $e) {
+            Log::error('Error exporting journal entries PDF: ' . $e->getMessage());
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 }

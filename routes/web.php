@@ -62,6 +62,7 @@ Route::group(
             Route::post('journal-entries/{id}/submit', [JournalEntryController::class, 'submit'])->name('journal-entries.submit')->middleware('can:submit journal entry');
             Route::post('journal-entries/{id}/approve', [JournalEntryController::class, 'approve'])->name('journal-entries.approve')->middleware('can:approve journal entry');
             Route::post('journal-entries/{id}/reject', [JournalEntryController::class, 'reject'])->name('journal-entries.reject')->middleware('can:reject journal entry');
+
             Route::get('journal-entries/attachments/{fileId}/download', [JournalEntryController::class, 'downloadAttachmentFile'])->name('journal-entries.attachments.download');
             Route::delete('journal-entries/attachments/{attachmentId}', [JournalEntryController::class, 'deleteAttachment'])->name('journal-entries.attachments.delete');
             Route::delete('journal-entries/attachments/files/{fileId}', [JournalEntryController::class, 'deleteAttachmentFile'])->name('journal-entries.attachments.files.delete');

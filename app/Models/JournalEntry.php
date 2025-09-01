@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Facades\DB;
 use App\Helpers\FinancialYearHelper;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Support\Facades\Auth;
 
 class JournalEntry extends Model
 {
@@ -223,10 +224,18 @@ class JournalEntry extends Model
         $totalDebit = $this->details()->sum('debit');
         $totalCredit = $this->details()->sum('credit');
 
-        $this->update([
-            'total_debit' => $totalDebit,
-            'total_credit' => $totalCredit
-        ]);
+        // استخدام raw query لتجنب إطلاق events
+        DB::table('journal_entries')
+            ->where('id', $this->id)
+            ->update([
+                'total_debit' => $totalDebit,
+                'total_credit' => $totalCredit,
+                'updated_at' => now()
+            ]);
+
+        // تحديث الـ attributes في الـ model
+        $this->total_debit = $totalDebit;
+        $this->total_credit = $totalCredit;
 
         return [
             'total_debit' => $totalDebit,
@@ -322,6 +331,11 @@ class JournalEntry extends Model
                     : self::STATUS_PENDING;
             }
 
+            // توليد entry_number إذا لم يكن موجود
+            if (!$journalEntry->entry_number) {
+                $journalEntry->entry_number = static::generateEntryNumber($journalEntry->source_type);
+            }
+
             // توليد رقم مرجعي إذا لم يكن موجود
             if (!$journalEntry->reference_number) {
                 $journalEntry->reference_number = static::generateReferenceNumber($journalEntry->source_type);
@@ -333,17 +347,10 @@ class JournalEntry extends Model
                 $journalEntry->updated_by = Auth::id();
             }
         });
-
-        static::saved(function ($journalEntry) {
-            // إعادة حساب المجاميع عند الحفظ
-            if ($journalEntry->details()->exists()) {
-                $journalEntry->calculateTotalsFromDetails();
-            }
-        });
     }
 
-    // دالة لتوليد رقم مرجعي
-    protected static function generateReferenceNumber($sourceType): string
+    // إضافة دالة توليد entry_number
+    protected static function generateEntryNumber($sourceType): string
     {
         $prefix = match ($sourceType) {
             self::SOURCE_OPENING_BALANCE => 'OB',
@@ -357,6 +364,33 @@ class JournalEntry extends Model
         $year = date('Y');
         $lastEntry = static::where('source_type', $sourceType)
             ->whereYear('created_at', $year)
+            ->whereNotNull('entry_number')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $sequence = $lastEntry ?
+            (int) substr($lastEntry->entry_number, -6) + 1 :
+            1;
+
+        return $prefix . '-' . $year . '-' . str_pad($sequence, 6, '0', STR_PAD_LEFT);
+    }
+
+    // تحديث دالة generateReferenceNumber لتعطي أرقام مختلفة
+    protected static function generateReferenceNumber($sourceType): string
+    {
+        $prefix = match ($sourceType) {
+            self::SOURCE_OPENING_BALANCE => 'REF-OB',
+            self::SOURCE_MANUAL => 'REF-JE',
+            self::SOURCE_INVOICE => 'REF-INV',
+            self::SOURCE_PAYMENT => 'REF-PAY',
+            self::SOURCE_RECEIPT => 'REF-REC',
+            default => 'REF-JE'
+        };
+
+        $year = date('Y');
+        $lastEntry = static::where('source_type', $sourceType)
+            ->whereYear('created_at', $year)
+            ->whereNotNull('reference_number')
             ->orderBy('id', 'desc')
             ->first();
 
