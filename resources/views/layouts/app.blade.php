@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="layout-navbar-fixed layout-menu-fixed layout-compact"
-    dir="ltr" data-skin="default" data-assets-path="{{ asset('assets') }}/" data-template="vertical-menu-template"
-    data-bs-theme="light">
+    dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}" data-skin="default" data-assets-path="{{ asset('assets') }}/"
+    data-template="vertical-menu-template" data-bs-theme="light">
 
 <head>
     <meta charset="utf-8">
@@ -150,7 +150,7 @@
             <!-- / Layout page -->
         </div>
     </div>
-        <script src="{{ asset('assets\/js\/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ asset('assets\/js\/jquery-3.7.1.min.js') }}"></script>
 
     @yield('scripts')
     @stack('scripts')

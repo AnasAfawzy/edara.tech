@@ -14,10 +14,10 @@
                             <h5 class="card-title mb-0">{{ __('Opening Journal Entry') }}</h5>
                             <div class="d-flex gap-2">
                                 @if ($activeFinancialYear && $openingJournalEntry)
-                                    <a href="{{ route('opening-journal-entry.report') }}" class="btn btn-info btn-sm">
+                                    {{-- <a href="{{ route('opening-journal-entry.report') }}" class="btn btn-info btn-sm">
                                         <i class="icon-base ti tabler-report"></i>
                                         {{ __('View Report') }}
-                                    </a>
+                                    </a> --}}
                                     <a href="{{ route('opening-journal-entry.export') }}" class="btn btn-success btn-sm">
                                         <i class="icon-base ti tabler-download"></i>
                                         {{ __('Export CSV') }}
@@ -60,7 +60,7 @@
                                             <div class="form-control-plaintext">
                                                 <span class="badge bg-info">
                                                     <i class="icon-base ti tabler-calendar me-1"></i>
-                                                    {{ $activeFinancialYear->start_date }}
+                                                    {{ $activeFinancialYear->start_date->format('Y-m-d') }}
                                                 </span>
                                             </div>
                                         </div>
@@ -77,7 +77,7 @@
                                     </div>
                                 </div>
 
-                                <div class="row mb-4">
+                                {{-- <div class="row mb-4">
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <label class="form-label">{{ __('Description') }}</label>
@@ -89,7 +89,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </div> --}}
 
                                 {{-- Display validation errors --}}
                                 @if ($errors->any())
@@ -103,7 +103,7 @@
                                 @endif
 
                                 {{-- Entry Summary --}}
-                                @if ($openingJournalEntry)
+                                {{-- @if ($openingJournalEntry)
                                     <div class="alert alert-info">
                                         <div class="row">
                                             <div class="col-md-3">
@@ -126,13 +126,12 @@
                                             </div>
                                         </div>
                                     </div>
-                                @endif
+                                @endif --}}
 
                                 {{-- Accounts Chart --}}
                                 <div class="card">
                                     <div class="card-header bg-light">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <h6 class="mb-0">{{ __('Chart of Accounts') }}</h6>
+                                        <div class="d-flex justify-content-center align-items-center">
                                             <div class="d-flex gap-3">
                                                 <span class="badge bg-success" id="totalDebit">{{ __('Total Debit') }}:
                                                     0.00</span>
@@ -249,7 +248,8 @@
                         hasData = true;
 
                         // إضافة statement إذا وجد
-                        const statementInput = document.querySelector(`input[name="details[${accountId}][statement]"]`);
+                        const statementInput = document.querySelector(
+                            `input[name="details[${accountId}][statement]"]`);
                         if (statementInput) {
                             formData.append(`details[${accountId}][statement]`, statementInput.value || '');
                         }
@@ -265,7 +265,8 @@
 
                         // إضافة statement إذا لم يتم إضافته من قبل
                         if (!formData.has(`details[${accountId}][statement]`)) {
-                            const statementInput = document.querySelector(`input[name="details[${accountId}][statement]"]`);
+                            const statementInput = document.querySelector(
+                                `input[name="details[${accountId}][statement]"]`);
                             if (statementInput) {
                                 formData.append(`details[${accountId}][statement]`, statementInput.value || '');
                             }
@@ -285,32 +286,32 @@
 
                 // إرسال AJAX بأقل headers ممكنة
                 fetch(form.action, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '{{ __('Success') }}',
+                                text: data.message,
+                                confirmButtonText: '{{ __('OK') }}'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            throw new Error(data.error || 'Unknown error');
+                        }
+                    })
+                    .catch(error => {
                         Swal.fire({
-                            icon: 'success',
-                            title: '{{ __('Success') }}',
-                            text: data.message,
+                            icon: 'error',
+                            title: '{{ __('Error') }}',
+                            text: error.message || '{{ __('Error saving data. Please try again.') }}',
                             confirmButtonText: '{{ __('OK') }}'
-                        }).then(() => {
-                            window.location.reload();
                         });
-                    } else {
-                        throw new Error(data.error || 'Unknown error');
-                    }
-                })
-                .catch(error => {
-                    Swal.fire({
-                        icon: 'error',
-                        title: '{{ __('Error') }}',
-                        text: error.message || '{{ __('Error saving data. Please try again.') }}',
-                        confirmButtonText: '{{ __('OK') }}'
                     });
-                });
             }
 
             /**
@@ -336,7 +337,8 @@
                 if (totalDebitBadge) {
                     totalDebitBadge.textContent = `{{ __('Total Debit') }}: ${totalDebit.toFixed(2)}`;
                     totalCreditBadge.textContent = `{{ __('Total Credit') }}: ${totalCredit.toFixed(2)}`;
-                    differenceBadge.textContent = `{{ __('Difference') }}: ${Math.abs(totalDebit - totalCredit).toFixed(2)}`;
+                    differenceBadge.textContent =
+                        `{{ __('Difference') }}: ${Math.abs(totalDebit - totalCredit).toFixed(2)}`;
                 }
 
                 const footerTotalDebit = document.getElementById('footerTotalDebit');
@@ -368,11 +370,14 @@
                     input.addEventListener('input', function() {
                         if (this.value && parseFloat(this.value) > 0) {
                             const accountId = this.dataset.accountId;
-                            const creditInput = document.querySelector(`input[name="details[${accountId}][credit]"]`);
+                            const creditInput = document.querySelector(
+                                `input[name="details[${accountId}][credit]"]`);
                             if (creditInput) creditInput.value = '';
                         }
                         debouncedUpdate();
-                    }, { passive: true });
+                    }, {
+                        passive: true
+                    });
                 }
 
                 // معالج الدائن
@@ -380,11 +385,14 @@
                     input.addEventListener('input', function() {
                         if (this.value && parseFloat(this.value) > 0) {
                             const accountId = this.dataset.accountId;
-                            const debitInput = document.querySelector(`input[name="details[${accountId}][debit]"]`);
+                            const debitInput = document.querySelector(
+                                `input[name="details[${accountId}][debit]"]`);
                             if (debitInput) debitInput.value = '';
                         }
                         debouncedUpdate();
-                    }, { passive: true });
+                    }, {
+                        passive: true
+                    });
                 }
 
                 // معالج النموذج
@@ -393,7 +401,8 @@
                         e.preventDefault();
 
                         // حساب سريع للمجاميع
-                        let totalDebit = 0, totalCredit = 0;
+                        let totalDebit = 0,
+                            totalCredit = 0;
                         for (let input of debitInputs) {
                             if (input.value) totalDebit += parseFloat(input.value) || 0;
                         }
