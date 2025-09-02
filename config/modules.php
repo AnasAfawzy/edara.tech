@@ -1,0 +1,149 @@
+<?php
+
+return [
+
+    // Main Data
+    [
+        'name'       => 'main_data',
+        'label'      => 'Main Data',
+        'icon'       => 'fa-solid fa-database',
+        'route'      => null,
+        'parent'     => null,
+        'show_in_sidebar' => true,
+    ],
+    [
+        'name'       => 'currency',
+        'label'      => 'Currency',
+        'icon'       => null,
+        'route'      => 'currencies.index',
+        'parent'     => 'main_data',
+        'show_in_sidebar' => true,
+    ],
+    [
+        'name'       => 'banks',
+        'label'      => 'Banks',
+        'icon'       => null,
+        'route'      => 'banks.index',
+        'parent'     => 'main_data',
+        'show_in_sidebar' => true,
+    ],
+    [
+        'name'       => 'cash_vaults',
+        'label'      => 'Cash Vaults',
+        'icon'       => null,
+        'route'      => 'cash-vaults.index',
+        'parent'     => 'main_data',
+        'show_in_sidebar' => true,
+    ],
+    [
+        'name'       => 'accounts',
+        'label'      => 'Accounts Tree',
+        'icon'       => null,
+        'route'      => 'accounts.index',
+        'parent'     => 'main_data',
+        'show_in_sidebar' => true,
+    ],
+    [
+        'name'       => 'cost_centers',
+        'label'      => 'Cost Centers',
+        'icon'       => null,
+        'route'      => 'cost-centers.index',
+        'parent'     => 'main_data',
+        'show_in_sidebar' => true,
+    ],
+
+    // Settings
+    [
+        'name'       => 'settings',
+        'label'      => 'Settings',
+        'icon'       => 'fa-solid fa-gear',
+        'route'      => null,
+        'parent'     => null,
+        'show_in_sidebar' => true,
+    ],
+    [
+        'name'       => 'accounting_settings',
+        'label'      => 'Accounts Settings',
+        'icon'       => null,
+        'route'      => 'accounting-settings.index',
+        'parent'     => 'settings',
+        'show_in_sidebar' => true,
+    ],
+    [
+        'name'       => 'system_settings',
+        'label'      => 'System Settings',
+        'icon'       => null,
+        'route'      => 'settings.index',
+        'parent'     => 'settings',
+        'show_in_sidebar' => true,
+    ],
+    [
+        'name'       => 'users',
+        'label'      => 'Users',
+        'icon'       => null,
+        'route'      => 'users.index',
+        'parent'     => 'settings',
+        'show_in_sidebar' => true,
+    ],
+    [
+        'name'       => 'roles',
+        'label'      => 'Roles',
+        'icon'       => null,
+        'route'      => 'roles.index',
+        'parent'     => 'settings',
+        'show_in_sidebar' => true,
+    ],
+    [
+        'name'       => 'financial_years',
+        'label'      => 'Financial Years',
+        'icon'       => null,
+        'route'      => 'financial-years.index',
+        'parent'     => 'settings',
+        'show_in_sidebar' => true,
+    ],
+
+    // Accounting
+    [
+        'name'       => 'accounting',
+        'label'      => 'Accounting',
+        'icon'       => 'fa-sack-dollar',
+        'route'      => null,
+        'parent'     => null,
+        'show_in_sidebar' => true,
+    ],
+    [
+        'name'       => 'journal_entry',
+        'label'      => 'Journal Entry',
+        'icon'       => null,
+        'route'      => 'journal-entries.index',
+        'parent'     => 'accounting',
+        'show_in_sidebar' => true,
+    ],
+
+    // Reports
+    [
+        'name'       => 'reports',
+        'label'      => 'Reports',
+        'icon'       => 'fa fa-chart-bar',
+        'route'      => null,
+        'parent'     => null,
+        'show_in_sidebar' => true,
+    ],
+    [
+        'name'       => 'account_statement',
+        'label'      => 'Account Statement',
+        'icon'       => null,
+        'route'      => 'accounts.statement',
+        'parent'     => 'reports',
+        'show_in_sidebar' => true,
+    ],
+    [
+        'name'       => 'opening_journal_entry',
+        'label'      => 'Opening Journal Entry',
+        'icon'       => null,
+        'route'      => 'opening-journal-entry.index',
+        'parent'     => 'reports',
+        'show_in_sidebar' => true,
+    ],
+
+];

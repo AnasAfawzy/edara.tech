@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Module;
+use App\Observers\ModuleObserver;
+use App\Repositories\AccountRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\Contracts\AccountRepositoryInterface;
-use App\Repositories\AccountRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,6 +23,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Module::observe(ModuleObserver::class);
     }
 }

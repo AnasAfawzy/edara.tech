@@ -3,7 +3,7 @@
         <a href="{{ url('/') }}" class="app-brand-link">
             <span class="app-brand-logo demo">
                 <span class="text-primary">
-                    <!-- لوجو -->
+                    <!-- Logo -->
                     <svg width="32" height="22" viewBox="0 0 32 22" fill="none"
                         xmlns="http://www.w3.org/2000/svg">
                         <path fill-rule="evenodd" clip-rule="evenodd"
@@ -20,28 +20,43 @@
             <span class="app-brand-text demo menu-text fw-bold ms-3">Edara Tech</span>
         </a>
         <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
-            <i class="icon-base  menu-toggle-icon ti ti-percentage-0 d-xl-block"></i>
+            <i class="icon-base menu-toggle-icon ti ti-percentage-0 d-xl-block"></i>
             <i class="icon-base ti tabler-x d-block d-xl-none"></i>
         </a>
     </div>
 
     <div class="menu-inner-shadow"></div>
     <ul class="menu-inner py-1">
+        @php
+            $user = auth()->user();
+            $isSuperAdmin = $user->isSuperAdmin();
+
+            // لو سوبر أدمن هجيب كل الموديولات الرئيسية
+            $modulesQuery = \App\Models\Module::query()->whereNull('parent_id');
+            $mainModules = $isSuperAdmin ? $modulesQuery->get() : $userRole->modules()->whereNull('parent_id')->get();
+        @endphp
+
         @foreach ($mainModules as $module)
             <li class="menu-item">
                 <a href="{{ $module->route ? route($module->route) : 'javascript:void(0);' }}"
-                    class="menu-link {{ $userRole->modules()->where('parent_id', $module->id)->count() ? 'menu-toggle' : '' }}">
-                    <i class="menu-icon icon-base fa {{ $module->icon }}"></i>
+                    class="menu-link {{ ($isSuperAdmin ? \App\Models\Module::where('parent_id', $module->id)->count() : $userRole->modules()->where('parent_id', $module->id)->count()) ? 'menu-toggle' : '' }}">
+                    <i class="menu-icon icon-base {{ $module->icon ?? 'fa fa-circle' }}"></i>
                     <div>{{ __($module->label) }}</div>
                 </a>
+
                 @php
-                    $children = $userRole->modules()->where('parent_id', $module->id)->get();
+                    $children = $isSuperAdmin
+                        ? \App\Models\Module::where('parent_id', $module->id)->get()
+                        : $userRole->modules()->where('parent_id', $module->id)->get();
                 @endphp
+
                 @if ($children->count())
                     <ul class="menu-sub">
                         @foreach ($children as $child)
                             <li class="menu-item">
-                                <a href="{{ route($child->route) }}" class="menu-link">
+                                <a href="{{ $child->route ? route($child->route) : 'javascript:void(0);' }}"
+                                    class="menu-link">
+                                    {{-- <i class="menu-icon icon-base {{ $child->icon ?? 'fa fa-circle' }}"></i> --}}
                                     <div>{{ __($child->label) }}</div>
                                 </a>
                             </li>
@@ -50,27 +65,6 @@
                 @endif
             </li>
         @endforeach
-
-
-
-        <li class="menu-item">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon icon-base fa fa-chart-bar"></i>
-                <div>{{ __('Reports') }}</div>
-            </a>
-            <ul class="menu-sub">
-                <li class="menu-item">
-                    <a href="{{ route('accounts.statement', ['account' => null]) }}" class="menu-link">
-                        <div>{{ __('Account Statement') }}</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ route('opening-journal-entry.index') }}" class="menu-link">
-                        <div>{{ __('Opening Journal Entry') }}</div>
-                    </a>
-                </li>
-            </ul>
-        </li>
     </ul>
 </aside>
 

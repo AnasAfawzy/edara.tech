@@ -29,4 +29,9 @@ class Module extends Model
     {
         return $this->belongsToMany(\App\Models\Role::class, 'module_role');
     }
+
+    public function permissions()
+    {
+        return $this->hasMany(\Spatie\Permission\Models\Permission::class, 'module_id');
+    }
 }
