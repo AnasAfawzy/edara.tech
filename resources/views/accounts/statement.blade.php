@@ -67,7 +67,8 @@
 
 @push('scripts')
     <script src="{{ asset('assets/js/sweetalert2.js') }}"></script>
-    @vite('resources/js/account_statement.js')
+    <script src="{{ asset('assets/main_js/account_statement.js') }}"></script>
+
     <script>
         // إضافة التحقق من البيانات مع SweetAlert قبل إرسال الطلب
         document.addEventListener('DOMContentLoaded', function() {
@@ -80,6 +81,7 @@
             statementForm.addEventListener('submit', function(e) {
                 // التحقق من اختيار الحساب
                 if (!accountIdInput.value || accountIdInput.value.trim() === '') {
+                    console.log(accountIdInput.value);
                     e.preventDefault();
                     e.stopImmediatePropagation();
                     Swal.fire({

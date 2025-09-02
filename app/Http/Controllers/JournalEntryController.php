@@ -108,6 +108,12 @@ class JournalEntryController extends Controller
 
         $attachments = $this->attachmentService->getAttachments($journalEntry);
 
+        // إذا كان AJAX request وعايز HTML
+        if (request()->ajax() && request()->header('Accept') === 'text/html') {
+            return view('JournalEntry.partials.show', compact('journalEntry', 'attachments'))->render();
+        }
+
+        // إذا كان عايز JSON
         if (request()->wantsJson() || request()->ajax()) {
             return response()->json([
                 'success' => true,
