@@ -3,7 +3,7 @@
  */
 
 'use strict';
-
+window.dt_User = null;
 // Datatable (js)
 document.addEventListener('DOMContentLoaded', function (e) {
   const dtUserTable = document.querySelector('.datatables-users'),
@@ -21,144 +21,130 @@ document.addEventListener('DOMContentLoaded', function (e) {
     userRole.classList.add('user_role');
     const userPlan = document.createElement('div');
     userPlan.classList.add('user_plan');
-    dt_User = new DataTable(dtUserTable, {
-      ajax: assetsPath + 'json/user-list.json', // JSON file to add data
-      columns: [
-        // columns according to JSON
-        { data: 'id' },
-        { data: 'id', orderable: false, render: DataTable.render.select() },
-        { data: 'full_name' },
-        { data: 'role' },
-        { data: 'current_plan' },
-        { data: 'billing' },
-        { data: 'status' },
-        { data: 'id' }
-      ],
-      columnDefs: [
-        {
-          // For Responsive
-          className: 'control',
-          orderable: false,
-          searchable: false,
-          responsivePriority: 5,
-          targets: 0,
-          render: function (data, type, full, meta) {
-            return '';
-          }
-        },
-        {
-          // For Checkboxes
-          targets: 1,
-          orderable: false,
-          searchable: false,
-          responsivePriority: 3,
-          checkboxes: true,
-          render: function () {
-            return '<input type="checkbox" class="dt-checkboxes form-check-input">';
-          },
-          checkboxes: {
-            selectAllRender: '<input type="checkbox" class="form-check-input">'
-          }
-        },
-        {
-          targets: 2,
-          responsivePriority: 1,
-          render: function (data, type, full, meta) {
-            const name = full['full_name'];
-            const email = full['email'];
-            const image = full['avatar'];
-            let output;
+    window.dt_User = new DataTable(dtUserTable, {
+                ajax: 'users_table/search',
+                columns: [{
+                        data: 'id'
+                    },
+                    {
+                        data: 'id',
+                        orderable: false,
+                        render: DataTable.render.select()
+                    },
+                    {
+                        data: 'full_name'
+                    },
+                    {
+                        data: 'role'
+                    },
+                    {
+                        data: 'id'
+                    } // actions
+                ],
+                columnDefs: [
+                    // ...ابقِ فقط التعريفات الخاصة بالأعمدة التي أبقيتها...
+                    // احذف أو علّق أي تعريف targets: 4, 5, 6 (plan, billing, status)
+                    // وعدّل أرقام targets حسب الترتيب الجديد
+                    {
+                        // For Responsive
+                        className: 'control',
+                        orderable: false,
+                        searchable: false,
+                        responsivePriority: 5,
+                        targets: 0,
+                        render: function (data, type, full, meta) {
+                            return '';
+                        }
+                    },
+                    {
+                        // For Checkboxes
+                        targets: 1,
+                        orderable: false,
+                        searchable: false,
+                        responsivePriority: 3,
+                        checkboxes: true,
+                        render: function () {
+                            return '<input type="checkbox" class="dt-checkboxes form-check-input">';
+                        },
+                        checkboxes: {
+                            selectAllRender: '<input type="checkbox" class="form-check-input">'
+                        }
+                    },
+                    {
+                        targets: 2,
+                        responsivePriority: 1,
+                        render: function (data, type, full, meta) {
+                            const name = full['full_name'];
+                            const email = full['email'];
+                            const image = full['avatar'];
+                            let output;
 
-            if (image) {
-              // For Avatar image
-              output = `<img src="${assetsPath}img/avatars/${image}" alt="Avatar" class="rounded-circle">`;
-            } else {
-              // For Avatar badge
-              const stateNum = Math.floor(Math.random() * 6) + 1;
-              const states = ['success', 'danger', 'warning', 'info', 'dark', 'primary', 'secondary'];
-              const state = states[stateNum];
-              const initials = (name.match(/\b\w/g) || []).slice(0, 2).join('').toUpperCase();
-              output = `<span class="avatar-initial rounded-circle bg-label-${state}">${initials}</span>`;
-            }
+                            if (image) {
+                                output = `<img src="${assetsPath}img/avatars/${image}" alt="Avatar" class="rounded-circle">`;
+                            } else {
+                                const stateNum = Math.floor(Math.random() * 6) + 1;
+                                const states = ['success', 'danger', 'warning', 'info', 'dark', 'primary', 'secondary'];
+                                const state = states[stateNum];
+                                const initials = (name.match(/\b\w/g) || []).slice(0, 2).join('').toUpperCase();
+                                output = `<span class="avatar-initial rounded-circle bg-label-${state}">${initials}</span>`;
+                            }
 
-            // Creates full output for row
-            const rowOutput = `
-              <div class="d-flex justify-content-left align-items-center role-name">
-                <div class="avatar-wrapper">
-                  <div class="avatar avatar-sm me-3">
-                    ${output}
-                  </div>
-                </div>
-                <div class="d-flex flex-column">
-                  <a href="${userView}" class="text-heading text-truncate"><span class="fw-medium">${name}</span></a>
-                  <small>@${email}</small>
-                </div>
+                            return `
+          <div class="d-flex justify-content-left align-items-center role-name">
+            <div class="avatar-wrapper">
+              <div class="avatar avatar-sm me-3">
+                ${output}
               </div>
-            `;
+            </div>
+            <div class="d-flex flex-column">
+              <a href="${userView}" class="text-heading text-truncate"><span class="fw-medium">${name}</span></a>
+              <small>@${email}</small>
+            </div>
+          </div>
+        `;
+                        }
+                    },
+                    {
+                        targets: 3,
+                        render: function (data, type, full, meta) {
+                            const role = full['role'];
+                            const roleBadgeObj = {
+                                Subscriber: '<span class="me-2"><i class="icon-base ti tabler-user icon-22px text-success"></i></span>',
+                                Author: '<span class="me-2"><i class="icon-base ti tabler-device-desktop icon-22px text-danger"></i></span>',
+                                Maintainer: '<span class="me-2"><i class="icon-base ti tabler-chart-pie icon-22px text-info"></i></span>',
+                                Editor: '<span class="me-2"><i class="icon-base ti tabler-edit icon-22px text-warning"></i></span>',
+                                Admin: '<span class="me-2"><i class="icon-base ti tabler-crown icon-22px text-primary"></i></span>'
+                            };
 
-            return rowOutput;
-          }
-        },
-        {
-          targets: 3,
-          render: function (data, type, full, meta) {
-            const role = full['role'];
-            const roleBadgeObj = {
-              Subscriber: '<span class="me-2"><i class="icon-base ti tabler-user icon-22px text-success"></i></span>',
-              Author:
-                '<span class="me-2"><i class="icon-base ti tabler-device-desktop icon-22px text-danger"></i></span>',
-              Maintainer: '<span class="me-2"><i class="icon-base ti tabler-chart-pie icon-22px text-info"></i></span>',
-              Editor: '<span class="me-2"><i class="icon-base ti tabler-edit icon-22px text-warning"></i></span>',
-              Admin: '<span class="me-2"><i class="icon-base ti tabler-crown icon-22px text-primary"></i></span>'
-            };
-
-            return `<span class='text-truncate d-flex align-items-center'>${roleBadgeObj[role] || ''}${role}</span>`;
-          }
-        },
-        {
-          // Plans
-          targets: 4,
-          render: function (data, type, full, meta) {
-            let plan = full['current_plan'];
-
-            return '<span class="fw-medium">' + plan + '</span>';
-          }
-        },
-        {
-          // User Status
-          targets: 6,
-          render: function (data, type, full, meta) {
-            let status = full['status'];
-
-            return (
-              '<span class="badge ' +
-              statusObj[status].class +
-              '" text-capitalized>' +
-              statusObj[status].title +
-              '</span>'
-            );
-          }
-        },
-        {
-          targets: -1,
-          title: 'Actions',
-          searchable: false,
-          orderable: false,
-          render: function (data, type, full, meta) {
-            return `
-              <div class="d-flex align-items-center">
-                <a href="javascript:;" class="btn btn-icon btn-text-secondary rounded-pill waves-effect delete-record"><i class="icon-base ti tabler-trash icon-md"></i></a>
-                <a href="${userView}" class="btn btn-icon btn-text-secondary rounded-pill waves-effect"><i class="icon-base ti tabler-eye icon-md"></i></a>
-                <a href="javascript:;" class="btn btn-icon btn-text-secondary rounded-pill waves-effect dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="icon-base ti tabler-dots-vertical icon-md"></i></a>
-                <div class="dropdown-menu dropdown-menu-end m-0">
-                  <a href="javascript:;" class="dropdown-item">Edit</a>
-                  <a href="javascript:;" class="dropdown-item">Suspend</a>
-                </div>
-              </div>
-            `;
-          }
-        }
-      ],
+                            return `<span class='text-truncate d-flex align-items-center'>${roleBadgeObj[role] || ''}${role}</span>`;
+                        }
+                    },
+                    {
+                        targets: 4,
+                        title: 'Actions',
+                        searchable: false,
+                        orderable: false,
+                        render: function (data, type, full, meta) {
+                        return `
+                        <div class="d-flex align-items-center">
+                            <a href="javascript:;" class="btn btn-icon btn-text-secondary rounded-pill waves-effect edit-record me-2" 
+                            data-user-id="${data}" 
+                            data-user-name="${full['full_name']}" 
+                            data-user-email="${full['email']}" 
+                            data-user-role-name="${full['role']}"
+                            title="${window.translations?.edit || 'Edit'}">
+                            <i class="icon-base ti tabler-edit icon-md"></i>
+                            </a>
+                            <a href="javascript:;" class="btn btn-icon btn-text-secondary rounded-pill waves-effect delete-record" 
+                            data-user-id="${data}" 
+                            title="${window.translations?.delete || 'Delete'}">
+                            <i class="icon-base ti tabler-trash icon-md"></i>
+                            </a>
+                        </div>
+                        `;
+                        }
+                    }
+                ],
       select: {
         style: 'multi',
         selector: 'td:nth-child(2)'
@@ -180,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
           features: [
             {
               search: {
-                placeholder: 'Search User',
+                placeholder: window.translations?.Search_User || 'Search User',
                 text: '_INPUT_'
               }
             },
@@ -189,14 +175,14 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 {
                   extend: 'collection',
                   className: 'btn btn-label-secondary dropdown-toggle me-4',
-                  text: '<span class="d-flex align-items-center gap-1"><i class="icon-base ti tabler-upload icon-xs"></i> <span class="d-inline-block">Export</span></span>',
+                  text: '<span class="d-flex align-items-center gap-1"><i class="icon-base ti tabler-upload icon-xs"></i> <span class="d-inline-block">' + (window.translations?.Export || 'Export') + '</span></span>',
                   buttons: [
                     {
                       extend: 'print',
                       text: `<span class="d-flex align-items-center"><i class="icon-base ti tabler-printer me-1"></i>Print</span>`,
                       className: 'dropdown-item',
                       exportOptions: {
-                        columns: [3, 4, 5, 6, 7],
+                        columns: [2, 3, 4],
                         format: {
                           body: function (inner, coldex, rowdex) {
                             if (inner.length <= 0) return inner;
@@ -248,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                       text: `<span class="d-flex align-items-center"><i class="icon-base ti tabler-file me-1"></i>Csv</span>`,
                       className: 'dropdown-item',
                       exportOptions: {
-                        columns: [3, 4, 5, 6, 7],
+                        columns: [2, 3, 4],
                         format: {
                           body: function (inner, coldex, rowdex) {
                             if (inner.length <= 0) return inner;
@@ -285,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                       text: `<span class="d-flex align-items-center"><i class="icon-base ti tabler-file-export me-1"></i>Excel</span>`,
                       className: 'dropdown-item',
                       exportOptions: {
-                        columns: [3, 4, 5, 6, 7],
+                        columns: [2, 3, 4],
                         format: {
                           body: function (inner, coldex, rowdex) {
                             if (inner.length <= 0) return inner;
@@ -322,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                       text: `<span class="d-flex align-items-center"><i class="icon-base ti tabler-file-text me-1"></i>Pdf</span>`,
                       className: 'dropdown-item',
                       exportOptions: {
-                        columns: [3, 4, 5, 6, 7],
+                        columns: [2, 3, 4],
                         format: {
                           body: function (inner, coldex, rowdex) {
                             if (inner.length <= 0) return inner;
@@ -354,51 +340,51 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         }
                       }
                     },
-                    {
-                      extend: 'copy',
-                      text: `<i class="icon-base ti tabler-copy me-1"></i>Copy`,
-                      className: 'dropdown-item',
-                      exportOptions: {
-                        columns: [3, 4, 5, 6, 7],
-                        format: {
-                          body: function (inner, coldex, rowdex) {
-                            if (inner.length <= 0) return inner;
+                    // {
+                    //   extend: 'copy',
+                    //   text: `<i class="icon-base ti tabler-copy me-1"></i>Copy`,
+                    //   className: 'dropdown-item',
+                    //   exportOptions: {
+                    //     columns: [2, 3, 4],
+                    //     format: {
+                    //       body: function (inner, coldex, rowdex) {
+                    //         if (inner.length <= 0) return inner;
 
-                            // Parse HTML content
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(inner, 'text/html');
+                    //         // Parse HTML content
+                    //         const parser = new DOMParser();
+                    //         const doc = parser.parseFromString(inner, 'text/html');
 
-                            let text = '';
+                    //         let text = '';
 
-                            // Handle role-name elements specifically
-                            const userNameElements = doc.querySelectorAll('.role-name');
-                            if (userNameElements.length > 0) {
-                              userNameElements.forEach(el => {
-                                // Get text from nested structure - try different selectors
-                                const nameText =
-                                  el.querySelector('.fw-medium')?.textContent ||
-                                  el.querySelector('.d-block')?.textContent ||
-                                  el.textContent;
-                                text += nameText.trim() + ' ';
-                              });
-                            } else {
-                              // Handle other elements (status, role, etc)
-                              text = doc.body.textContent || doc.body.innerText;
-                            }
+                    //         // Handle role-name elements specifically
+                    //         const userNameElements = doc.querySelectorAll('.role-name');
+                    //         if (userNameElements.length > 0) {
+                    //           userNameElements.forEach(el => {
+                    //             // Get text from nested structure - try different selectors
+                    //             const nameText =
+                    //               el.querySelector('.fw-medium')?.textContent ||
+                    //               el.querySelector('.d-block')?.textContent ||
+                    //               el.textContent;
+                    //             text += nameText.trim() + ' ';
+                    //           });
+                    //         } else {
+                    //           // Handle other elements (status, role, etc)
+                    //           text = doc.body.textContent || doc.body.innerText;
+                    //         }
 
-                            return text.trim();
-                          }
-                        }
-                      }
-                    }
+                    //         return text.trim();
+                    //       }
+                    //     }
+                    //   }
+                    // }
                   ]
                 },
                 {
-                  text: '<i class="icon-base ti tabler-plus me-0 me-sm-1 icon-16px"></i><span class="d-none d-sm-inline-block">Add New User</span>',
+                  text: '<i class="icon-base ti tabler-plus me-0 me-sm-1 icon-16px"></i><span class="d-none d-sm-inline-block">' + (window.translations?.add_user || 'Add User') + '</span>',
                   className: 'add-new btn btn-primary rounded-2 waves-effect waves-light',
                   attr: {
                     'data-bs-toggle': 'modal',
-                    'data-bs-target': '#addRoleModal'
+                    'data-bs-target': '#addUserModal'
                   }
                 }
               ]
@@ -417,7 +403,14 @@ document.addEventListener('DOMContentLoaded', function (e) {
           previous: '<i class="icon-base ti tabler-chevron-left scaleX-n1-rtl icon-18px"></i>',
           first: '<i class="icon-base ti tabler-chevrons-left scaleX-n1-rtl icon-18px"></i>',
           last: '<i class="icon-base ti tabler-chevrons-right scaleX-n1-rtl icon-18px"></i>'
-        }
+        },
+        info: window.translations?.pagination_info || 'Showing _START_ to _END_ of _TOTAL_ entries',
+        infoEmpty: window.translations?.pagination_info_empty || 'No entries to show',
+        lengthMenu: window.translations?.pagination_length_menu || 'Show _MENU_ entries',
+        search: window.translations?.pagination_search || 'Search:',
+        zeroRecords: window.translations?.pagination_zero_records || 'No matching records found',
+        emptyTable: window.translations?.pagination_empty_table || 'No data available in table',
+        infoFiltered: window.translations?.pagination_info_filtered || '(filtered from _MAX_ total entries)',
       },
       // For responsive popup
       responsive: {
@@ -458,58 +451,22 @@ document.addEventListener('DOMContentLoaded', function (e) {
       }
     });
 
-    //? The 'delete-record' class is necessary for the functionality of the following code.
-    function deleteRecord(event) {
-      let row = document.querySelector('.dtr-expanded');
-      if (event) {
-        row = event.target.parentElement.closest('tr');
-      }
-      if (row) {
-        dt_User.row(row).remove().draw();
-      }
-    }
-
-    function bindDeleteEvent() {
-      const userTable = document.querySelector('.datatables-users');
-      const modal = document.querySelector('.dtr-bs-modal');
-
-      if (userTable && userTable.classList.contains('collapsed')) {
-        if (modal) {
-          modal.addEventListener('click', function (event) {
-            if (event.target.parentElement.classList.contains('delete-record')) {
-              deleteRecord();
-              const closeButton = modal.querySelector('.btn-close');
-              if (closeButton) closeButton.click(); // Simulates a click on the close button
-            }
-          });
-        }
-      } else {
-        const tableBody = userTable?.querySelector('tbody');
-        if (tableBody) {
-          tableBody.addEventListener('click', function (event) {
-            if (event.target.parentElement.classList.contains('delete-record')) {
-              deleteRecord(event);
-            }
-          });
-        }
-      }
-    }
 
     // Initial event binding
-    bindDeleteEvent();
+    // bindDeleteEvent();
 
-    // Re-bind events when modal is shown or hidden
-    document.addEventListener('show.bs.modal', function (event) {
-      if (event.target.classList.contains('dtr-bs-modal')) {
-        bindDeleteEvent();
-      }
-    });
+    // // Re-bind events when modal is shown or hidden
+    // document.addEventListener('show.bs.modal', function (event) {
+    //   if (event.target.classList.contains('dtr-bs-modal')) {
+    //     bindDeleteEvent();
+    //   }
+    // });
 
-    document.addEventListener('hide.bs.modal', function (event) {
-      if (event.target.classList.contains('dtr-bs-modal')) {
-        bindDeleteEvent();
-      }
-    });
+    // document.addEventListener('hide.bs.modal', function (event) {
+    //   if (event.target.classList.contains('dtr-bs-modal')) {
+    //     bindDeleteEvent();
+    //   }
+    // });
   }
 
   // Filter form control to default size

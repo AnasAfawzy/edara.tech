@@ -32,10 +32,10 @@ class DatabaseSeeder extends Seeder
         $adminRole->modules()->sync($modules);
 
         // ربط المستخدم admin@admin.com بالدور admin إذا كان موجوداً
-        $user = User::where('email', 'admin@admin.com')->first();
-        if ($user && !$user->hasRole('admin')) {
-            $user->assignRole('admin');
-        }
+        // $user = User::where('email', 'admin@admin.com')->first();
+        // if ($user && !$user->hasRole('admin')) {
+        //     $user->assignRole('admin');
+        // }
 
         // $this->call([
         //     AccountSeeder::class,

@@ -62,7 +62,7 @@ return [
         'show_in_sidebar' => true,
     ],
     [
-        'name'       => 'accounting_settings',
+        'name'       => 'accounts_settings',
         'label'      => 'Accounts Settings',
         'icon'       => null,
         'route'      => 'accounting-settings.index',
@@ -106,7 +106,7 @@ return [
     [
         'name'       => 'accounting',
         'label'      => 'Accounting',
-        'icon'       => 'fa-sack-dollar',
+        'icon'       => 'fa fa-sack-dollar',
         'route'      => null,
         'parent'     => null,
         'show_in_sidebar' => true,

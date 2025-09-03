@@ -43,12 +43,17 @@ class UserManagementController extends Controller
         return view('users.create', compact('roles'));
     }
 
+    public function show($id)
+    {
+        //
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
             'name' => 'required',
             'email' => 'required|email|unique:users',
-            'password' => 'required',
+            'password' => 'required|confirmed|min:6',
             'roles' => 'required|string'
         ]);
         $user = $this->userService->createUser([
@@ -65,7 +70,7 @@ class UserManagementController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'roles' => implode(', ', $user->getRoleNames()->toArray()),
+                    'roles' => $user->getRoleNames()->toArray(),
                 ]
             ]);
         }
@@ -76,13 +81,13 @@ class UserManagementController extends Controller
     public function edit($id)
     {
         $user = $this->userService->findUser($id);
-        $role = $user->roles->pluck('name')->first(); // اسم واحد فقط
+        $roles = $user->roles->pluck('name')->toArray(); // مصفوفة
         if (request()->ajax()) {
             return response()->json([
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'roles' => $role, // اسم واحد فقط
+                'roles' => $roles,
             ]);
         }
     }
@@ -92,7 +97,7 @@ class UserManagementController extends Controller
         $data = $request->validate([
             'name' => 'required',
             'email' => 'required|email|unique:users,email,' . $id,
-            'password' => 'nullable',
+            'password' => 'nullable|confirmed|min:6',
             'roles' => 'required|string'
         ]);
         $updateData = [
@@ -112,7 +117,7 @@ class UserManagementController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'roles' => implode(', ', $user->getRoleNames()->toArray()),
+                    'roles' => $user->getRoleNames()->toArray(),
                 ]
             ]);
         }
@@ -135,12 +140,44 @@ class UserManagementController extends Controller
     public function search(Request $request)
     {
         $search = $request->get('search', '');
+
         $perPage = $request->get('perPage', 10);
         $users = $this->userService->searchUsers($search, $perPage);
 
+        // يرجع فقط الصفوف وليس tbody كامل
         $view = view('users.partials.table', compact('users'))->render();
         $pagination = $users->appends($request->all())->links()->render();
 
         return response()->json(['html' => $view, 'pagination' => $pagination]);
+    }
+
+
+    public function UsersTableSearch(Request $request)
+    {
+        $search = $request->get('search', '');
+        $perPage = $request->get('perPage', 10);
+
+        $users = $this->userService->searchUsers($search, $perPage);
+
+        // DataTable يحتاج data => [ ... ]
+        $data = [];
+        foreach ($users as $user) {
+            $data[] = [
+                'id' => $user->id,
+                'full_name' => $user->name,
+                'email' => $user->email,
+                'avatar' => $user->avatar ?? null,
+                'role' => $user->roles->pluck('name')->implode(', '),
+                'current_plan' => $user->current_plan ?? '',
+                'billing' => $user->billing ?? '',
+                'status' => $user->status ?? 2,
+            ];
+        }
+
+        return response()->json([
+            'data' => $data,
+            'recordsTotal' => $users->total(),
+            'recordsFiltered' => $users->total(),
+        ]);
     }
 }

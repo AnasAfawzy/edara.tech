@@ -38,7 +38,7 @@ Route::group(
         Route::middleware('auth')->group(function () {
 
             // Users
-            Route::resource('users', UserController::class);
+            // Route::resource('users', UserController::class);
 
             // Accounts
             Route::get('accounts/tree/data', [AccountController::class, 'treeData'])->name('accounts.tree.data');
@@ -102,11 +102,17 @@ Route::group(
 
             // User Management
             Route::get('users/search', [UserManagementController::class, 'search'])->name('users.search');
+            Route::get('users_table/search', [UserManagementController::class, 'UsersTableSearch'])->name('users_table.search');
             Route::resource('users', UserManagementController::class)->except(['show']);
 
             // Roles
-            Route::get('roles/search', [RoleController::class, 'search'])->name('roles.search');
             Route::resource('roles', RoleController::class);
+            Route::group(['prefix' => 'roles', 'as' => 'roles.'], function () {
+                Route::get('/ajax/search', [RoleController::class, 'search'])->name('search');
+                Route::post('/{role}/duplicate', [RoleController::class, 'duplicate'])->name('duplicate');
+                Route::get('/users/list', [RoleController::class, 'getUsersWithRoles'])->name('users');
+                Route::get('/permissions/matrix', [RoleController::class, 'getPermissionMatrix'])->name('permissions.matrix');
+            });
 
             // Financial Years
             Route::resource('financial-years', FinancialYearController::class)->except(['show', 'create']);

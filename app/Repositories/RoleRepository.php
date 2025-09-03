@@ -209,4 +209,17 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
 
         return $permissions;
     }
+
+    public function count(): int
+    {
+        return $this->model->count();
+    }
+
+    public function countActive(): int
+    {
+        // // إذا كان لديك حقل status
+        // return $this->model->where('status', 'active')->count();
+        // أو ببساطة عدد الأدوار التي لها مستخدمين
+        return $this->model->has('users')->count();
+    }
 }

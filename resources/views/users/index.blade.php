@@ -60,7 +60,9 @@
                                     <th>{{ __('Action') }}</th>
                                 </tr>
                             </thead>
-                            @include('users.partials.table', ['users' => $users])
+                            <tbody id="users-table-body">
+                                @include('users.partials.table', ['users' => $users])
+                            </tbody>
                         </table>
                         <div class="mt-3" id="users-pagination">
                             {{ $users->appends(request()->query())->links() }}
@@ -95,6 +97,11 @@
                             <label for="password" class="form-label">{{ __('Password') }}</label>
                             <input type="password" class="form-control" id="password" name="password" required>
                         </div>
+                        <div class="mb-3" id="passwordConfirmationField">
+                            <label for="password_confirmation" class="form-label">{{ __('Confirm Password') }}</label>
+                            <input type="password" class="form-control" id="password_confirmation"
+                                name="password_confirmation">
+                        </div>
                         <div class="mb-3">
                             <label for="roles" class="form-label">{{ __('Roles') }}</label>
                             <select class="form-select" id="roles" name="roles" required>
@@ -118,16 +125,43 @@
 
 @push('scripts')
     <script>
-        function reloadUsersTable(search = '', perPage = 10, page = 1) {
-            $.get("{{ route('users.search') }}", {
-                search: search,
-                perPage: perPage,
-                page: page
-            }, function(data) {
-                console.log(search);
-                $('#users-table-body').replaceWith(data.html);
-                $('#users-pagination').html(data.pagination);
+        $('#userForm').on('submit', function(e) {
+            e.preventDefault();
+            let userId = $('#user_id').val();
+            let url = userId ? `/users/${userId}` : `/users`;
+            let method = userId ? 'PUT' : 'POST';
+
+            let formData = $(this).serialize();
+
+            $.ajax({
+                url: url,
+                type: method,
+                data: formData,
+                success: function(res) {
+                    $('#userModal').modal('hide');
+                    Swal.fire('{{ __('Success') }}', res.message, 'success');
+                    // إعادة تحميل الجدول
+                    let search = $('#live-search').val('');
+                    let perPage = 10;
+                    reloadUsersTable('', perPage, 1);
+                },
+                error: function(xhr) {
+                    let msg = xhr.responseJSON?.message || '{{ __('An error occurred') }}';
+                    Swal.fire('{{ __('Error') }}', msg, 'error');
+                }
             });
+        });
+
+        function reloadUsersTable(search = '', perPage = 10, page = 1) {
+            fetch(`{{ route('users.search') }}?search=${encodeURIComponent(search)}&perPage=${perPage}&page=${page}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('users-table-body').innerHTML = data.html;
+                    document.getElementById('users-pagination').innerHTML = data.pagination;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
         }
 
         $('#live-search').on('input', function() {
@@ -175,6 +209,34 @@
                     });
                 }
             });
+        }
+
+        function editUser(id) {
+            $.get(`/users/${id}/edit`, function(data) {
+                $('#user_id').val(data.id);
+                $('#name').val(data.name);
+                $('#email').val(data.email);
+                $('#roles').val(data.roles).change();
+                // أظهر حقول الباسورد والتأكيد، واجعلها غير مطلوبة
+                $('#passwordField').show();
+                $('#password').val('');
+                $('#password_confirmation').val('');
+                $('#userModalLabel').text('{{ __('Edit User') }}');
+                $('#userModal').modal('show');
+            });
+        }
+
+
+        // عند فتح المودال للإضافة، أظهر حقل الباسورد وافرغ الحقول
+        function openUserModal() {
+            $('#user_id').val('');
+            $('#name').val('');
+            $('#email').val('');
+            $('#roles').val('').change();
+            $('#passwordField').show();
+            $('#password').val('');
+            $('#password_confirmation').val('');
+            $('#userModalLabel').text('{{ __('Add User') }}');
         }
     </script>
 @endpush

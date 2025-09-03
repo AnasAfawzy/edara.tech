@@ -19,6 +19,7 @@ class PermissionsSeeder extends Seeder
             foreach ($actions as $action) {
                 \Spatie\Permission\Models\Permission::firstOrCreate([
                     'name' => "{$action} {$cleanName}",
+                    'module_id' => Module::where('name', $module)->first()->id,
                     'guard_name' => 'web',
                 ]);
             }
