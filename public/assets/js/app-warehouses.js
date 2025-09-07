@@ -231,7 +231,30 @@ function loadWarehouseForEdit(warehouseId) {
                 if (editWarehouseId) editWarehouseId.value = data.warehouse.id;
                 if (editWarehouseName) editWarehouseName.value = data.warehouse.name;
                 if (editNotes) editNotes.value = data.warehouse.notes || '';
-                if (editStatus) editStatus.value = data.warehouse.status;
+                // تحديث معالجة الحالة للتعامل مع boolean
+                if (editStatus) {
+                    // تحويل القيمة إلى string للمقارنة مع options
+                    const statusValue = data.warehouse.status ? '1' : '0';
+                    console.log('Setting status to:', statusValue); // للتشخيص
+                    editStatus.value = statusValue;
+
+                    // التأكد من أن القيمة تم تعيينها بشكل صحيح
+                    if (editStatus.value !== statusValue) {
+                        console.warn('Status value not set correctly. Available options:');
+                        Array.from(editStatus.options).forEach(option => {
+                            console.log('Option value:', option.value, 'text:', option.text);
+                        });
+
+                        // محاولة تعيين القيمة بطريقة أخرى
+                        Array.from(editStatus.options).forEach(option => {
+                            if (option.value === statusValue) {
+                                option.selected = true;
+                            } else {
+                                option.selected = false;
+                            }
+                        });
+                    }
+                }
 
                 if (editModal) {
                     const modalInstance = new bootstrap.Modal(editModal);

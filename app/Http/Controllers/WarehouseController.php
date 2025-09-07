@@ -24,7 +24,7 @@ class WarehouseController extends Controller
     {
         try {
             $perPage = (int) $request->get('perPage', 10);
-            $search = (string) $request->get('search', ''); // تأكيد أنه string
+            $search = (string) $request->get('search', '');
 
             Log::info('Warehouse index called', [
                 'perPage' => $perPage,
@@ -53,7 +53,6 @@ class WarehouseController extends Controller
     public function search(Request $request)
     {
         try {
-            // التأكد من أن القيم هي string وint
             $search = (string) ($request->get('search') ?? '');
             $perPage = (int) ($request->get('perPage') ?? 10);
 
@@ -63,7 +62,6 @@ class WarehouseController extends Controller
                 'user_id' => Auth::id()
             ]);
 
-            // التحقق من صحة البيانات
             if ($perPage < 1 || $perPage > 100) {
                 $perPage = 10;
             }
@@ -113,14 +111,15 @@ class WarehouseController extends Controller
             $data = $request->validate([
                 'name' => 'required|string|max:255',
                 'notes' => 'nullable|string|max:1000',
-                'status' => 'required|in:active,inactive',
+                'status' => 'required|boolean', // تغيير إلى boolean
             ]);
 
             $warehouse = $this->warehouseService->createWarehouse($data);
 
             Log::info('Warehouse created successfully', [
                 'warehouse_id' => $warehouse->id,
-                'name' => $warehouse->name
+                'name' => $warehouse->name,
+                'status' => $warehouse->status
             ]);
 
             return response()->json([
@@ -167,9 +166,17 @@ class WarehouseController extends Controller
 
             $warehouse = $this->warehouseService->findWarehouseOrFail($id);
 
+            // تأكد من إرجاع status كـ boolean
+            $warehouseData = $warehouse->toArray();
+            $warehouseData['status'] = (bool) $warehouse->status;
+
+            Log::info('Warehouse data for edit', [
+                'warehouse' => $warehouseData
+            ]);
+
             return response()->json([
                 'success' => true,
-                'warehouse' => $warehouse
+                'warehouse' => $warehouseData
             ]);
         } catch (Exception $e) {
             Log::error('Warehouse edit error: ' . $e->getMessage(), [
@@ -201,14 +208,15 @@ class WarehouseController extends Controller
             $data = $request->validate([
                 'name' => 'required|string|max:255',
                 'notes' => 'nullable|string|max:1000',
-                'status' => 'required|in:active,inactive',
+                'status' => 'required|boolean', // تغيير إلى boolean
             ]);
 
             $warehouse = $this->warehouseService->updateWarehouse($id, $data);
 
             Log::info('Warehouse updated successfully', [
                 'warehouse_id' => $id,
-                'name' => $warehouse->name
+                'name' => $warehouse->name,
+                'status' => $warehouse->status
             ]);
 
             return response()->json([

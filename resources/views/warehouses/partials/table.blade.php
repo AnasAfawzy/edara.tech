@@ -20,12 +20,10 @@
             <td>
                 <div class="form-check form-switch">
                     <input class="form-check-input toggle-status" type="checkbox" id="status-{{ $warehouse->id }}"
-                        data-id="{{ $warehouse->id }}"
-                        {{ ($warehouse->status ?? 'inactive') === 'active' ? 'checked' : '' }}>
+                        data-id="{{ $warehouse->id }}" {{ $warehouse->status ? 'checked' : '' }}>
                     <label class="form-check-label" for="status-{{ $warehouse->id }}">
-                        <span
-                            class="badge {{ ($warehouse->status ?? 'inactive') === 'active' ? 'bg-label-success' : 'bg-label-secondary' }}">
-                            {{ ($warehouse->status ?? 'inactive') === 'active' ? __('Active') : __('Inactive') }}
+                        <span class="badge {{ $warehouse->status ? 'bg-label-success' : 'bg-label-secondary' }}">
+                            {{ $warehouse->status ? __('Active') : __('Inactive') }}
                         </span>
                     </label>
                 </div>

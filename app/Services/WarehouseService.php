@@ -70,8 +70,10 @@ class WarehouseService extends BaseService
         }
 
         // Set default status if not provided
-        if (!isset($data['status'])) {
-            $data['status'] = 'active';
+        if (isset($data['status'])) {
+            $data['status'] = (bool) $data['status'];
+        } else {
+            $data['status'] = true;
         }
 
         return $this->warehouseRepository->create($data);
@@ -85,6 +87,10 @@ class WarehouseService extends BaseService
         // Validate unique name (excluding current warehouse)
         if ($this->warehouseRepository->nameExists($data['name'], $id)) {
             throw new Exception(__('Warehouse name already exists'));
+        }
+
+        if (isset($data['status'])) {
+            $data['status'] = (bool) $data['status'];
         }
 
         $warehouse = $this->warehouseRepository->update($id, $data);
@@ -119,11 +125,20 @@ class WarehouseService extends BaseService
      */
     public function toggleStatus(int $id)
     {
-        $warehouse = $this->warehouseRepository->toggleStatus($id);
+        $warehouse = $this->warehouseRepository->findById($id);
         if (!$warehouse) {
             throw new Exception(__('Warehouse not found'));
         }
-        return $warehouse;
+
+        // تبديل الحالة: 1 إلى 0 أو 0 إلى 1
+        $newStatus = !$warehouse->status;
+
+        $updatedWarehouse = $this->warehouseRepository->update($id, ['status' => $newStatus]);
+        if (!$updatedWarehouse) {
+            throw new Exception(__('Failed to update warehouse status'));
+        }
+
+        return $updatedWarehouse;
     }
 
     /**

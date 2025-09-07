@@ -35,8 +35,8 @@
                             </label>
                             <select class="form-select" id="status" name="status" required>
                                 <option value="">{{ __('Choose status') }}</option>
-                                <option value="active" selected>{{ __('Active') }}</option>
-                                <option value="inactive">{{ __('Inactive') }}</option>
+                                <option value="1" selected>{{ __('Active') }}</option>
+                                <option value="0">{{ __('Inactive') }}</option>
                             </select>
                             <div class="invalid-feedback"></div>
                         </div>
