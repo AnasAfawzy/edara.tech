@@ -310,5 +310,26 @@
     "An error occurred while adding the warehouse": "حدث خطأ أثناء إضافة المخزن",
     "An error occurred while updating the warehouse": "حدث خطأ أثناء تحديث المخزن",
     "An error occurred while deleting the warehouse": "حدث خطأ أثناء حذف المخزن",
-    "An error occurred while loading the warehouse data": "حدث خطأ أثناء تحميل بيانات المخزن"
+    "An error occurred while loading the warehouse data": "حدث خطأ أثناء تحميل بيانات المخزن",
+
+    "Product Categories": "فئات المنتجات",
+    "Category Name": "اسم الفئة",
+    "English Name": "الاسم الإنجليزي",
+
+    "Add Category": "إضافة فئة",
+    "Edit Category": "تعديل فئة",
+    "Update Category": "تحديث فئة",
+    "Add New Category": "إضافة فئة جديدة",
+    "Search categories...": "البحث في الفئات...",
+    "No categories found": "لا توجد فئات",
+    "Try adjusting your search terms": "حاول تعديل كلمات البحث",
+    "Not specified": "غير محدد",
+
+    "This category will be permanently deleted": "سيتم حذف هذه الفئة نهائياً",
+    "Category added successfully": "تم إضافة الفئة بنجاح",
+    "Category updated successfully": "تم تحديث الفئة بنجاح",
+    "An error occurred while adding the category": "حدث خطأ أثناء إضافة الفئة",
+    "An error occurred while updating the category": "حدث خطأ أثناء تحديث الفئة",
+    "An error occurred while deleting the category": "حدث خطأ أثناء حذف الفئة",
+    "An error occurred while loading the category data": "حدث خطأ أثناء تحميل بيانات الفئة"
 }

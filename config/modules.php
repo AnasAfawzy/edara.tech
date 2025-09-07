@@ -160,6 +160,14 @@ return [
         'route' => 'warehouses.index',
         'parent' => 'inventory',
         'show_in_sidebar' => true,
-    ]
+    ],
+    [
+        'name'       => 'product_categories',
+        'label'      => 'Product Categories',
+        'icon'       => null,
+        'route'      => 'product-categories.index',
+        'parent'     => 'inventory',
+        'show_in_sidebar' => true,
+    ],
 
 ];

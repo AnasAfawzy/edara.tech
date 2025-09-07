@@ -14,10 +14,11 @@ class ModuleObserver
     {
         // الأكشنز الافتراضية
         $actions = ['view', 'create', 'edit', 'delete'];
+        $module_name = str_replace(['_', '-'], ' ', strtolower($module->name));
 
         foreach ($actions as $action) {
             Permission::firstOrCreate([
-                'name'       => "{$action} {$module->name}",
+                'name'       => "{$action} {$module_name}",
                 'guard_name' => 'web',
                 'module_id'  => $module->id,
             ]);

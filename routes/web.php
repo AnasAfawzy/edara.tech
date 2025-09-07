@@ -15,6 +15,7 @@ use App\Http\Controllers\CostCenterController;
 use App\Http\Controllers\JournalEntryController;
 use App\Http\Controllers\FinancialYearController;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\AccountStatementController;
 use App\Http\Controllers\AccountingSettingsController;
 use App\Http\Controllers\OpeningJournalEntryController;
@@ -125,6 +126,10 @@ Route::group(
             Route::post('financial-years/{id}/activate', [FinancialYearController::class, 'activate'])->name('financial-years.activate');
             Route::post('financial-years/{id}/close', [FinancialYearController::class, 'close'])->name('financial-years.close');
             Route::get('financial-years/search', [FinancialYearController::class, 'search'])->name('financial-years.search');
+
+            Route::get('/product-categories/search', [ProductCategoryController::class, 'search'])->name('product-categories.search');
+            Route::resource('product-categories', ProductCategoryController::class);
+            Route::post('/product-categories/{id}/toggle-status', [ProductCategoryController::class, 'toggleStatus'])->name('product-categories.toggle-status');
 
             // Dashboard
             Route::get('/dashboard', function () {

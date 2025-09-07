@@ -13,6 +13,7 @@ use App\Repositories\WarehouseRepository;
 use App\Repositories\CostCenterRepository;
 use App\Repositories\JournalEntryRepository;
 use App\Repositories\FinancialYearRepository;
+use App\Repositories\ProductCategoryRepository;
 use App\Repositories\AccountStatementRepository;
 use App\Repositories\Interfaces\BankRepositoryInterface;
 use App\Repositories\Interfaces\RoleRepositoryInterface;
@@ -24,6 +25,7 @@ use App\Repositories\Interfaces\WarehouseRepositoryInterface;
 use App\Repositories\Interfaces\CostCenterRepositoryInterface;
 use App\Repositories\Interfaces\JournalEntryRepositoryInterface;
 use App\Repositories\Interfaces\FinancialYearRepositoryInterface;
+use App\Repositories\Interfaces\ProductCategoryRepositoryInterface;
 use App\Repositories\Interfaces\AccountStatementRepositoryInterface;
 
 
@@ -43,6 +45,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(FinancialYearRepositoryInterface::class, FinancialYearRepository::class);
         $this->app->bind(AccountStatementRepositoryInterface::class, AccountStatementRepository::class);
         $this->app->bind(WarehouseRepositoryInterface::class, WarehouseRepository::class);
+        $this->app->bind(ProductCategoryRepositoryInterface::class,ProductCategoryRepository::class);
         // وهكذا لأي Repository جديد
     }
 
