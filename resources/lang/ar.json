@@ -255,5 +255,48 @@
     "more": "أكثر",
     "No data available": "لا توجد بيانات متاحة",
     "Refresh": "تحديث",
-    "Reset": "إعادة تعيين"
+    "Reset": "إعادة تعيين",
+
+    "Inventory": "المخزون",
+    "Warehouses": "المخازن",
+    "Warehouses Management": "إدارة المخازن",
+    "Manage your warehouse locations": "إدارة مواقع المخازن الخاصة بك",
+    "Search warehouses...": "البحث في المخازن...",
+    "Add Warehouse": "إضافة مخزن",
+    "Warehouse": "مخزن",
+    "Notes": "الملاحظات",
+    "Actions": "الإجراءات",
+    "No warehouses found": "لا توجد مخازن",
+    "Start by adding your first warehouse": "ابدأ بإضافة أول مخزن لك",
+    "No notes": "لا توجد ملاحظات",
+    "Total": "الإجمالي",
+    "per page": "في الصفحة",
+
+    "Add New Warehouse": "إضافة مخزن جديد",
+    "Warehouse Name": "اسم المخزن",
+    "Enter warehouse name": "أدخل اسم المخزن",
+    "Enter additional notes": "أدخل ملاحظات إضافية",
+    "Choose status": "اختر الحالة",
+    "Update Warehouse": "تحديث المخزن",
+    "Edit Warehouse": "تعديل المخزن",
+
+    "Are you sure?": "هل أنت متأكد؟",
+    "This warehouse will be permanently deleted": "سيتم حذف هذا المخزن نهائياً",
+    "Yes, Delete": "نعم، احذف",
+    "Updating...": "جاري التحديث...",
+
+    "An error occurred while loading data": "حدث خطأ أثناء تحميل البيانات",
+    "An error occurred while adding warehouse": "حدث خطأ أثناء إضافة المخزن",
+    "An error occurred while updating warehouse": "حدث خطأ أثناء تحديث المخزن",
+    "An error occurred while deleting warehouse": "حدث خطأ أثناء حذف المخزن",
+
+    "Warehouse added successfully": "تم إضافة المخزن بنجاح",
+    "Warehouse updated successfully": "تم تحديث المخزن بنجاح",
+    "Warehouse deleted successfully": "تم حذف المخزن بنجاح",
+    "Status updated successfully": "تم تحديث الحالة بنجاح",
+    "Warehouse name already exists": "اسم المخزن موجود بالفعل",
+    "Warehouse not found": "المخزن غير موجود",
+
+    "Created": "تم الإنشاء",
+    "ID": "الرقم التعريفي"
 }

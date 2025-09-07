@@ -10,14 +10,15 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CashVaultController;
+use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\CostCenterController;
 use App\Http\Controllers\JournalEntryController;
 use App\Http\Controllers\FinancialYearController;
 use App\Http\Controllers\UserManagementController;
-use App\Http\Controllers\AccountingSettingsController;
 use App\Http\Controllers\AccountStatementController;
-use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
+use App\Http\Controllers\AccountingSettingsController;
 use App\Http\Controllers\OpeningJournalEntryController;
+use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
 Route::group(
     [
@@ -104,7 +105,12 @@ Route::group(
             Route::get('users/search', [UserManagementController::class, 'search'])->name('users.search');
             Route::get('users_table/search', [UserManagementController::class, 'UsersTableSearch'])->name('users_table.search');
             Route::resource('users', UserManagementController::class)->except(['show']);
-
+            // Route::resource('inventory', InventoryController::class)->except(['show']);
+            Route::get('warehouses/search', [WarehouseController::class, 'search'])->name('warehouses.search');
+            Route::get('warehouses/all', [WarehouseController::class, 'all'])->name('warehouses.all');
+            Route::post('warehouses/{warehouse}/toggle-status', [WarehouseController::class, 'toggleStatus'])->name('warehouses.toggle-status');
+            Route::get('warehouses/statistics', [WarehouseController::class, 'statistics'])->name('warehouses.statistics');
+            Route::resource('warehouses', WarehouseController::class);
             // Roles
             Route::resource('roles', RoleController::class);
             Route::group(['prefix' => 'roles', 'as' => 'roles.'], function () {

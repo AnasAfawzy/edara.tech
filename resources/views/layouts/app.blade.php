@@ -80,7 +80,7 @@
     <script>
         window.appLocale = "{{ app()->getLocale() }}";
     </script>
-
+    @livewireStyles
     @stack('css')
     @yield('css')
 </head>
@@ -151,7 +151,7 @@
         </div>
     </div>
     <script src="{{ asset('assets\/js\/jquery-3.7.1.min.js') }}"></script>
-
+    @livewireScripts
     @yield('scripts')
     @stack('scripts')
 

@@ -6,23 +6,25 @@ use App\Repositories\BankRepository;
 use App\Repositories\RoleRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\AccountRepository;
-use App\Repositories\AccountStatementRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\CurrencyRepository;
 use App\Repositories\CashVaultRepository;
+use App\Repositories\WarehouseRepository;
 use App\Repositories\CostCenterRepository;
 use App\Repositories\JournalEntryRepository;
 use App\Repositories\FinancialYearRepository;
+use App\Repositories\AccountStatementRepository;
 use App\Repositories\Interfaces\BankRepositoryInterface;
 use App\Repositories\Interfaces\RoleRepositoryInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use App\Repositories\Interfaces\AccountRepositoryInterface;
-use App\Repositories\Interfaces\AccountStatementRepositoryInterface;
 use App\Repositories\Interfaces\CurrencyRepositoryInterface;
 use App\Repositories\Interfaces\CashVaultRepositoryInterface;
+use App\Repositories\Interfaces\WarehouseRepositoryInterface;
 use App\Repositories\Interfaces\CostCenterRepositoryInterface;
 use App\Repositories\Interfaces\JournalEntryRepositoryInterface;
 use App\Repositories\Interfaces\FinancialYearRepositoryInterface;
+use App\Repositories\Interfaces\AccountStatementRepositoryInterface;
 
 
 
@@ -40,6 +42,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
         $this->app->bind(FinancialYearRepositoryInterface::class, FinancialYearRepository::class);
         $this->app->bind(AccountStatementRepositoryInterface::class, AccountStatementRepository::class);
+        $this->app->bind(WarehouseRepositoryInterface::class, WarehouseRepository::class);
         // وهكذا لأي Repository جديد
     }
 

@@ -145,5 +145,21 @@ return [
         'parent'     => 'reports',
         'show_in_sidebar' => true,
     ],
+    [
+        'name' => 'Inventory',
+        'label' => 'Inventory',
+        'icon' => 'ti tabler-building-warehouse',
+        'route' => null,
+        'parent' => null,
+        'show_in_sidebar' => true,
+    ],
+    [
+        'name' => 'warehouses',
+        'label' => 'Warehouses',
+        'icon' => null,
+        'route' => 'warehouses.index',
+        'parent' => 'inventory',
+        'show_in_sidebar' => true,
+    ]
 
 ];
