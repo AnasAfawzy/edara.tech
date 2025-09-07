@@ -87,11 +87,22 @@ function reloadWarehousesTable() {
     const perPageSelect = document.getElementById('wh-perPage');
     const tableBody = document.querySelector('#warehousesTable tbody');
 
+    // التحقق من وجود العناصر المطلوبة
     if (!searchInput || !perPageSelect || !tableBody) {
         console.error('Required elements not found', {
             searchInput: !!searchInput,
             perPageSelect: !!perPageSelect,
             tableBody: !!tableBody
+        });
+
+        // عرض رسالة خطأ للمستخدم
+        Swal.fire({
+            title: window.warehouseTranslations.error,
+            text: 'عناصر الصفحة غير متوفرة، يرجى إعادة تحميل الصفحة',
+            icon: 'error',
+            confirmButtonText: 'إعادة تحميل الصفحة'
+        }).then(() => {
+            window.location.reload();
         });
         return;
     }
@@ -99,74 +110,166 @@ function reloadWarehousesTable() {
     const search = searchInput.value.trim() || '';
     const perPage = perPageSelect.value || 10;
 
-    console.log('Reloading table with search:', search, 'perPage:', perPage);
 
-    // إضافة loading indicator
+    // إضافة loading indicator مع animation محسن
     tableBody.innerHTML = `
         <tr>
             <td colspan="4" class="text-center">
-                <div class="d-flex justify-content-center align-items-center py-4">
-                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                    <span>جاري التحميل...</span>
+                <div class="d-flex justify-content-center align-items-center py-5">
+                    <div class="spinner-border spinner-border-sm text-primary me-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span class="text-muted">جاري البحث...</span>
                 </div>
             </td>
         </tr>
     `;
 
-    fetch(`/warehouses/search?search=${encodeURIComponent(search)}&perPage=${perPage}`, {
+    // بناء URL بشكل أكثر أماناً
+    const searchUrl = new URL('/warehouses/search', window.location.origin);
+    searchUrl.searchParams.set('search', search);
+    searchUrl.searchParams.set('perPage', perPage);
+
+    // إضافة timeout للطلب
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 ثوانٍ
+
+    fetch(searchUrl.toString(), {
+            method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]') ?.getAttribute('content') || ''
+            },
+            signal: controller.signal
         })
         .then(response => {
-            console.log('Response status:', response.status);
+            clearTimeout(timeoutId);
+
+            // التحقق من نوع المحتوى
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error(`نوع استجابة غير متوقع: ${contentType || 'غير محدد'}`);
+            }
 
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                // معالجة أخطاء HTTP المختلفة
+                switch (response.status) {
+                    case 404:
+                        throw new Error('صفحة البحث غير موجودة');
+                    case 403:
+                        throw new Error('ليس لديك صلاحية للوصول');
+                    case 500:
+                        throw new Error('خطأ في الخادم، يرجى المحاولة لاحقاً');
+                    case 429:
+                        throw new Error('تم تجاوز الحد المسموح من الطلبات');
+                    default:
+                        throw new Error(`خطأ HTTP ${response.status}: ${response.statusText}`);
+                }
             }
-            return response.text();
+
+            return response.json();
         })
-        .then(text => {
-            console.log('Response received, length:', text.length);
+        .then(data => {
 
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                console.error('JSON parse error:', e);
-                console.log('Response text:', text.substring(0, 500));
-                throw new Error('استجابة غير صحيحة من الخادم');
+
+            // التحقق من صحة البيانات المستلمة
+            if (!data || typeof data !== 'object') {
+                throw new Error('البيانات المستلمة غير صحيحة');
             }
 
-            if (data.success && data.html) {
+            if (data.success === false) {
+                throw new Error(data.message || 'فشل في البحث');
+            }
+
+            if (!data.html) {
+                throw new Error('لم يتم استلام HTML للجدول');
+            }
+
+            // تحديث الجدول
+            try {
                 tableBody.outerHTML = data.html;
-                console.log('Table reloaded successfully. Count:', data.count);
+                console.log('Table updated successfully');
+
+                // إعادة تفعيل Event Listeners
                 attachEventListeners();
-            } else {
-                throw new Error(data.message || 'بيانات غير صحيحة من الخادم');
+
+                // عرض معلومات النتائج (اختياري)
+                if (search.trim() !== '') {
+                    const resultMessage = data.count > 0 ?
+                        `تم العثور على ${data.count} مخزن` :
+                        'لم يتم العثور على نتائج';
+
+                    // يمكن عرض رسالة مؤقتة هنا إذا أردت
+                    console.log(resultMessage);
+                }
+
+            } catch (updateError) {
+                console.error('Error updating table:', updateError);
+                throw new Error('فشل في تحديث الجدول');
             }
         })
         .catch(error => {
-            console.error('Error reloading table:', error);
+            clearTimeout(timeoutId);
+            console.error('Search error:', error);
 
+            let errorMessage = 'حدث خطأ في البحث';
+            let actionButton = '';
+
+            // تحديد نوع الخطأ وتخصيص الرسالة
+            if (error.name === 'AbortError') {
+                errorMessage = 'انتهت مهلة البحث، يرجى المحاولة مرة أخرى';
+            } else if (error.message.includes('Failed to fetch')) {
+                errorMessage = 'مشكلة في الاتصال بالخادم';
+                actionButton = `
+                    <button class="btn btn-sm btn-outline-warning me-2" onclick="window.location.reload()">
+                        <i class="icon-base ti tabler-refresh me-1"></i>
+                        إعادة تحميل الصفحة
+                    </button>
+                `;
+            } else {
+                errorMessage = error.message || errorMessage;
+            }
+
+            // عرض رسالة الخطأ في الجدول
             tableBody.innerHTML = `
                 <tr>
                     <td colspan="4" class="text-center">
-                        <div class="d-flex flex-column align-items-center py-5 text-danger">
-                            <i class="icon-base ti tabler-alert-circle mb-3" style="font-size: 3rem;"></i>
-                            <h6 class="mb-2">حدث خطأ في تحميل البيانات</h6>
-                            <p class="text-muted mb-3">${error.message}</p>
-                            <button class="btn btn-sm btn-outline-primary" onclick="reloadWarehousesTable()">
-                                <i class="icon-base ti tabler-refresh me-1"></i>
-                                إعادة المحاولة
-                            </button>
+                        <div class="d-flex flex-column align-items-center py-5">
+                            <div class="text-danger mb-3">
+                                <i class="icon-base ti tabler-alert-circle" style="font-size: 3rem;"></i>
+                            </div>
+                            <h6 class="text-danger mb-2">خطأ في البحث</h6>
+                            <p class="text-muted mb-3 text-center" style="max-width: 400px;">
+                                ${errorMessage}
+                            </p>
+                            <div class="d-flex gap-2">
+                                ${actionButton}
+                                <button class="btn btn-sm btn-outline-primary" onclick="reloadWarehousesTable()">
+                                    <i class="icon-base ti tabler-refresh me-1"></i>
+                                    إعادة المحاولة
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('wh-search').value=''; reloadWarehousesTable();">
+                                    <i class="icon-base ti tabler-x me-1"></i>
+                                    مسح البحث
+                                </button>
+                            </div>
                         </div>
                     </td>
                 </tr>
             `;
+
+            // عرض تنبيه إضافي للأخطاء الخطيرة
+            if (error.message.includes('صفحة البحث غير موجودة') ||
+                error.message.includes('ليس لديك صلاحية')) {
+                Swal.fire({
+                    title: window.warehouseTranslations.error,
+                    text: error.message,
+                    icon: 'error',
+                    confirmButtonText: 'موافق'
+                });
+            }
         });
 }
 
@@ -628,5 +731,5 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error('Per page select #wh-perPage not found');
     }
 
-    console.log('DOM loaded, initializing warehouse table...');
+
 });

@@ -1,18 +1,22 @@
 <tbody>
     @forelse($warehouses as $warehouse)
-        <tr id="warehouse-row-{{ $warehouse->id }}">
+        <tr>
             <td>
                 <div class="d-flex align-items-center">
-                    <div>
-                        <h6 class="mb-0">{{ $warehouse->name ?? '-' }}</h6>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="mb-0">{{ $warehouse->name }}</h6>
                     </div>
                 </div>
             </td>
             <td>
                 @if ($warehouse->notes)
-                    <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ $warehouse->notes }}">
-                        {{ Str::limit($warehouse->notes, 50) }}
-                    </span>
+                    <span class="text-wrap">{{ Str::limit($warehouse->notes, 50) }}</span>
+                    @if (strlen($warehouse->notes) > 50)
+                        <button type="button" class="btn btn-link btn-sm p-0 ms-1" data-bs-toggle="tooltip"
+                            title="{{ $warehouse->notes }}">
+                            <i class="icon-base ti tabler-info-circle"></i>
+                        </button>
+                    @endif
                 @else
                     <span class="text-muted">{{ __('No notes') }}</span>
                 @endif
@@ -29,18 +33,15 @@
                 </div>
             </td>
             <td>
-                <div class="d-flex gap-2">
-                    <!-- زر التعديل -->
+                <div class="d-flex gap-1">
                     <button type="button"
                         class="btn btn-icon btn-text-secondary rounded-pill waves-effect edit-warehouse"
-                        data-id="{{ $warehouse->id }}" title="{{ __('Edit') }}" data-bs-toggle="tooltip">
+                        data-id="{{ $warehouse->id }}" title="{{ __('Edit') }}">
                         <i class="icon-base ti tabler-pencil"></i>
                     </button>
-
-                    <!-- زر الحذف -->
                     <button type="button"
                         class="btn btn-icon btn-text-danger rounded-pill waves-effect delete-warehouse"
-                        data-id="{{ $warehouse->id }}" title="{{ __('Delete') }}" data-bs-toggle="tooltip">
+                        data-id="{{ $warehouse->id }}" title="{{ __('Delete') }}">
                         <i class="icon-base ti tabler-trash"></i>
                     </button>
                 </div>
@@ -48,20 +49,10 @@
         </tr>
     @empty
         <tr>
-            <td colspan="5" class="text-center">
-                <div class="d-flex flex-column align-items-center justify-content-center py-5">
-                    {{-- <div class="avatar avatar-xl mb-3">
-                        <div class="avatar-initial rounded bg-label-secondary">
-                            <i class="icon-base ti tabler-building-warehouse" style="font-size: 2rem;"></i>
-                        </div>
-                    </div> --}}
-                    <h6 class="mb-1">{{ __('No warehouses found') }}</h6>
-                    {{-- <p class="text-muted mb-3">{{ __('Start by adding your first warehouse') }}</p>
-                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
-                        data-bs-target="#createModal">
-                        <i class="icon-base ti tabler-plus me-1"></i>
-                        {{ __('Add Warehouse') }}
-                    </button> --}}
+            <td colspan="4" class="text-center py-5">
+                <div class="d-flex flex-column align-items-center">
+                    <i class="icon-base ti tabler-search-off mb-3" style="font-size: 3rem; color: #ddd;"></i>
+                    <h6 class="mb-2">{{ __('No warehouses found') }}</h6>
                 </div>
             </td>
         </tr>

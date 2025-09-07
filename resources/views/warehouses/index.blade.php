@@ -14,7 +14,8 @@
                         {{-- عرض عدد الصفوف --}}
                         <div class="d-flex align-items-center">
                             <label for="wh-perPage" class="form-label me-2 mb-0">{{ __('Show') }}:</label>
-                            <select id="wh-perPage" class="form-select form-select-sm" style="width:auto;">
+                            <select id="wh-perPage" class="form-select form-select-sm" style="width:auto;"
+                                @if (!empty($showWarehouseAccountAlert) && $showWarehouseAccountAlert) disabled @endif>
                                 <option value="5">5</option>
                                 <option value="10" selected>10</option>
                                 <option value="25">25</option>
@@ -28,12 +29,13 @@
                             <label for="wh-search" class="form-label me-2 mb-0">{{ __('Search') }}:</label>
                             <div class="input-group" style="width:250px;">
                                 <input type="text" id="wh-search" class="form-control form-control-sm"
-                                    placeholder="{{ __('Search warehouses...') }}">
+                                    placeholder="{{ __('Search warehouses...') }}"
+                                    @if (!empty($showWarehouseAccountAlert) && $showWarehouseAccountAlert) disabled @endif>
                             </div>
 
                             {{-- زر إضافة مخزن - تحديث data-bs-target --}}
                             <button id="btnOpenCreate" type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#createModal">
+                                data-bs-target="#createModal" @if (!empty($showWarehouseAccountAlert) && $showWarehouseAccountAlert) disabled @endif>
                                 <i class="icon-base ti tabler-plus me-1"></i>
                                 {{ __('Add Warehouse') }}
                             </button>
@@ -134,5 +136,19 @@
         });
     </script>
     <script src="{{ asset('assets/js/sweetalert2.js') }}"></script>
+    @if (!empty($showWarehouseAccountAlert) && $showWarehouseAccountAlert)
+        <script>
+            Swal.fire({
+                icon: 'warning',
+                title: '{{ __('Attention') }}',
+                text: '{{ __('Please link the default warehouse account from accounts settings') }}',
+                confirmButtonText: '{{ __('Go to Accounts Settings') }}'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{{ route('accounting-settings.index') }}";
+                }
+            });
+        </script>
+    @endif
     <script src="{{ asset('assets/js/app-warehouses.js') }}?v={{ time() }}"></script>
 @endsection

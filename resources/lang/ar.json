@@ -300,5 +300,15 @@
     "Created": "تم الإنشاء",
     "ID": "الرقم التعريفي",
     "Default Warehouses Account": "الحساب الرئيسي للمخازن",
-    "Main account for warehouse operations and inventory management": "الحساب الرئيسي لعمليات المخازن وإدارة المخزون"
+    "Main account for warehouse operations and inventory management": "الحساب الرئيسي لعمليات المخازن وإدارة المخزون",
+    "Default warehouse account not configured. Please configure it in accounting settings.": "الحساب الرئيسي للمخازن غير مُعرَّف. يرجى تكوينه في إعدادات المحاسبة.",
+    "Warehouse account creation failed": "فشل في إنشاء حساب المخزن",
+    "Failed to create warehouse": "فشل في إنشاء المخزن",
+    "Cannot delete warehouse with non-zero account balance": "لا يمكن حذف مخزن برصيد حساب غير صفر",
+    "Cannot delete warehouse because its account has journal entries": "لا يمكن حذف المخزن لأن حسابه يحتوي على قيود يومية",
+    "Please link the default warehouse account from accounts settings": "يرجى ربط حساب المخازن الافتراضي من إعدادات الحسابات",
+    "An error occurred while adding the warehouse": "حدث خطأ أثناء إضافة المخزن",
+    "An error occurred while updating the warehouse": "حدث خطأ أثناء تحديث المخزن",
+    "An error occurred while deleting the warehouse": "حدث خطأ أثناء حذف المخزن",
+    "An error occurred while loading the warehouse data": "حدث خطأ أثناء تحميل بيانات المخزن"
 }

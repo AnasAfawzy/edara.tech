@@ -13,6 +13,7 @@ class Warehouse extends Model
         'name',
         'notes',
         'status',
+        'account_id',
         'created_by',
         'updated_by'
     ];
@@ -22,6 +23,14 @@ class Warehouse extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the account associated with the warehouse
+     */
+    public function account()
+    {
+        return $this->belongsTo(Account::class, 'account_id');
+    }
 
     /**
      * Scope for active warehouses
