@@ -298,5 +298,7 @@
     "Warehouse not found": "المخزن غير موجود",
 
     "Created": "تم الإنشاء",
-    "ID": "الرقم التعريفي"
+    "ID": "الرقم التعريفي",
+    "Default Warehouses Account": "الحساب الرئيسي للمخازن",
+    "Main account for warehouse operations and inventory management": "الحساب الرئيسي لعمليات المخازن وإدارة المخزون"
 }

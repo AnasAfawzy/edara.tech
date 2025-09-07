@@ -40,6 +40,7 @@
                                         value="{{ old('default_supplier_account', $supplierAccountId) }}">
                                 </div>
                             </div>
+
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label">{{ __('Default Banks Account') }}</label>
@@ -67,6 +68,26 @@
                                 </div>
                             </div>
 
+                            {{-- إضافة الحساب الرئيسي للمخازن --}}
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">{{ __('Default Warehouses Account') }}</label>
+                                    @php
+                                        $warehouseAccountId = acc_setting('default_warehouse_account');
+                                        $warehouseAccount = $accounts->firstWhere('id', $warehouseAccountId);
+                                    @endphp
+                                    <input class="form-control" list="accountsList" id="defaultWarehouseAccountInput"
+                                        placeholder="{{ __('Search for account by name or code') }}"
+                                        value="{{ old('default_warehouse_account_name', $warehouseAccount ? $warehouseAccount->name . ' — ' . $warehouseAccount->code : '') }}">
+                                    <input type="hidden" name="default_warehouse_account" id="defaultWarehouseAccountId"
+                                        value="{{ old('default_warehouse_account', $warehouseAccountId) }}">
+                                </div>
+                                {{-- يمكن إضافة حقل آخر هنا في المستقبل --}}
+                                <div class="col-md-6">
+                                    {{-- مساحة فارغة للتوسعات المستقبلية --}}
+                                </div>
+                            </div>
+
                             <datalist id="accountsList">
                                 @foreach ($accounts as $acc)
                                     <option value="{{ $acc->name }} — {{ $acc->code }}"
@@ -75,6 +96,7 @@
                             </datalist>
 
                             <button type="submit" class="btn btn-primary">
+                                <i class="icon-base ti tabler-device-floppy me-1"></i>
                                 {{ __('Save Settings') }}
                             </button>
                         </form>
@@ -103,10 +125,15 @@
                 }
             });
         }
+
+        // إضافة معالج للحقول الموجودة
         handleAccountInput('defaultCustomerAccountInput', 'defaultCustomerAccountId');
         handleAccountInput('defaultSupplierAccountInput', 'defaultSupplierAccountId');
         handleAccountInput('defaultBankAccountInput', 'defaultBankAccountId');
         handleAccountInput('defaultCashVaultAccountInput', 'defaultCashVaultAccountId');
+
+        // إضافة معالج للحقل الجديد - المخازن
+        handleAccountInput('defaultWarehouseAccountInput', 'defaultWarehouseAccountId');
 
         @if (session('success'))
             Swal.fire({
