@@ -7,6 +7,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\CategoryController;
@@ -139,6 +140,12 @@ Route::group(
             Route::get('/brands/search', [BrandController::class, 'search'])->name('brands.search');
             Route::resource('brands', BrandController::class);
             Route::post('/brands/{id}/toggle-status', [BrandController::class, 'toggleStatus'])->name('brands.toggle-status');
+
+            Route::get('/products/search', [ProductController::class, 'search'])->name('products.search');
+            Route::get('/products/generate-code', [ProductController::class, 'generateCode'])->name('products.generate-code');
+            Route::get('/products/low-stock', [ProductController::class, 'lowStock'])->name('products.low-stock');
+            Route::resource('products', ProductController::class);
+            Route::post('/products/{id}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
 
             // Dashboard
             Route::get('/dashboard', function () {

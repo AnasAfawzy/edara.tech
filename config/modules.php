@@ -158,7 +158,7 @@ return [
         'label' => 'Warehouses',
         'icon' => null,
         'route' => 'warehouses.index',
-        'parent' => 'inventory',
+        'parent' => 'Inventory',
         'show_in_sidebar' => true,
     ],
     [
@@ -166,7 +166,7 @@ return [
         'label'      => 'Categories',
         'icon'       => null,
         'route'      => 'categories.index',
-        'parent'     => 'inventory',
+        'parent'     => 'Inventory',
         'show_in_sidebar' => true,
     ],
     [
@@ -182,7 +182,15 @@ return [
         'label'      => 'Brands',
         'icon'       => null,
         'route'      => 'brands.index',
-        'parent'     => 'inventory',
+        'parent'     => 'Inventory',
+        'show_in_sidebar' => true,
+    ],
+    [
+        'name'       => 'products',
+        'label'      => 'Products',
+        'icon'       => null,
+        'route'      => 'products.index',
+        'parent'     => 'Inventory',
         'show_in_sidebar' => true,
     ],
 ];

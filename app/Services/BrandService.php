@@ -35,6 +35,14 @@ class BrandService extends BaseService
     }
 
     /**
+     * Get all active Brands
+     */
+    public function getAllActiveBrands(): Collection
+    {
+        return $this->brandRepository->getAllActive();
+    }
+
+    /**
      * Create new brand with validation
      */
     public function createBrand(array $data): Model

@@ -8,6 +8,7 @@ use App\Repositories\UnitRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\BrandRepository;
 use App\Repositories\AccountRepository;
+use App\Repositories\ProductRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\CategoryRepository;
 use App\Repositories\CurrencyRepository;
@@ -23,6 +24,7 @@ use App\Repositories\Interfaces\UnitRepositoryInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use App\Repositories\Interfaces\BrandRepositoryInterface;
 use App\Repositories\Interfaces\AccountRepositoryInterface;
+use App\Repositories\Interfaces\ProductRepositoryInterface;
 use App\Repositories\Interfaces\CategoryRepositoryInterface;
 use App\Repositories\Interfaces\CurrencyRepositoryInterface;
 use App\Repositories\Interfaces\CashVaultRepositoryInterface;
@@ -52,6 +54,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(CategoryRepositoryInterface::class, CategoryRepository::class);
         $this->app->bind(UnitRepositoryInterface::class, UnitRepository::class);
         $this->app->bind(BrandRepositoryInterface::class, BrandRepository::class);
+        $this->app->bind(ProductRepositoryInterface::class, ProductRepository::class);
     }
 
     public function boot(): void
