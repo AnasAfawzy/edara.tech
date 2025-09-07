@@ -6,14 +6,14 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
-use App\Repositories\Interfaces\ProductCategoryRepositoryInterface;
+use App\Repositories\Interfaces\CategoryRepositoryInterface;
 use Illuminate\Support\Facades\Auth;
 
-class ProductCategoryService extends BaseService
+class CategoryService extends BaseService
 {
-    protected ProductCategoryRepositoryInterface $categoryRepository;
+    protected CategoryRepositoryInterface $categoryRepository;
 
-    public function __construct(ProductCategoryRepositoryInterface $categoryRepository)
+    public function __construct(CategoryRepositoryInterface $categoryRepository)
     {
         parent::__construct($categoryRepository);
         $this->categoryRepository = $categoryRepository;

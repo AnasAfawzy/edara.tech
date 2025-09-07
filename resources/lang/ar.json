@@ -312,7 +312,7 @@
     "An error occurred while deleting the warehouse": "حدث خطأ أثناء حذف المخزن",
     "An error occurred while loading the warehouse data": "حدث خطأ أثناء تحميل بيانات المخزن",
 
-    "Product Categories": "فئات المنتجات",
+    "Categories": "الفئات",
     "Category Name": "اسم الفئة",
     "English Name": "الاسم الإنجليزي",
 
@@ -331,5 +331,30 @@
     "An error occurred while adding the category": "حدث خطأ أثناء إضافة الفئة",
     "An error occurred while updating the category": "حدث خطأ أثناء تحديث الفئة",
     "An error occurred while deleting the category": "حدث خطأ أثناء حذف الفئة",
-    "An error occurred while loading the category data": "حدث خطأ أثناء تحميل بيانات الفئة"
+    "An error occurred while loading the category data": "حدث خطأ أثناء تحميل بيانات الفئة",
+
+    "Units": "الوحدات",
+    "Unit Name": "اسم الوحدة",
+    "Symbol": "الرمز",
+    "Add Unit": "إضافة وحدة",
+    "Edit Unit": "تعديل وحدة",
+    "Update Unit": "تحديث الوحدة",
+    "Add New Unit": "إضافة وحدة جديدة",
+    "Search units...": "البحث في الوحدات...",
+    "No units found": "لا توجد وحدات",
+
+    "This unit will be permanently deleted": "سيتم حذف هذه الوحدة نهائياً",
+    "Unit updated successfully": "تم تحديث الوحدة بنجاح",
+    "Unit deleted successfully": "تم حذف الوحدة بنجاح",
+    "Unit status updated successfully": "تم تحديث حالة الوحدة بنجاح",
+
+    "An error occurred while adding the unit": "حدث خطأ أثناء إضافة الوحدة",
+    "An error occurred while updating the unit": "حدث خطأ أثناء تحديث الوحدة",
+    "An error occurred while deleting the unit": "حدث خطأ أثناء حذف الوحدة",
+    "An error occurred while loading the unit data": "حدث خطأ أثناء تحميل بيانات الوحدة",
+
+    "Unit name already exists": "اسم الوحدة موجود بالفعل",
+    "Unit not found": "الوحدة غير موجودة",
+    "Cannot delete unit with products": "لا يمكن حذف وحدة تحتوي على منتجات",
+    "Failed to update unit status": "فشل في تحديث حالة الوحدة"
 }

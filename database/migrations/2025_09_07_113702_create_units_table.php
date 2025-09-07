@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('product_categories', function (Blueprint $table) {
+        Schema::create('units', function (Blueprint $table) {
             $table->id();
             $table->string('name', 255);
             $table->string('name_en', 255)->nullable();
+            $table->string('symbol', 10);
             $table->text('notes')->nullable();
             $table->boolean('status')->default(1);
             $table->unsignedBigInteger('created_by')->nullable();
@@ -26,6 +27,7 @@ return new class extends Migration
 
             $table->index('status');
             $table->index('name');
+            $table->unique('symbol');
         });
     }
 
@@ -34,6 +36,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('product_categories');
+        Schema::dropIfExists('units');
     }
 };

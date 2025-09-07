@@ -3,53 +3,48 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\ProductCategoryService;
+use App\Services\UnitService;
 
-class ProductCategoryController extends Controller
+class UnitController extends Controller
 {
-    protected $categoryService;
+    protected $unitService;
 
-    public function __construct(ProductCategoryService $categoryService)
+    public function __construct(UnitService $unitService)
     {
-        $this->categoryService = $categoryService;
+        $this->unitService = $unitService;
     }
 
     /**
-     * Display a listing of categories
+     * Display a listing of units
      */
     public function index(Request $request)
     {
-        $perPage = $request->get('perPage', 10);
-        $search = $request->get('search', '');
+        // 🔥 تحميل البيانات بدون معاملات في الـ URL
+        $units = $this->unitService->searchUnits('', 10);
 
-        $categories = $this->categoryService->searchCategories($search, $perPage);
-
-        return view('product-categories.index', compact(
-            'categories',
-            'perPage',
-            'search'
-        ));
+        return view('units.index', compact('units'));
     }
 
     /**
-     * Store a newly created category
+     * Store a newly created unit
      */
     public function store(Request $request)
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'name_en' => 'nullable|string|max:255',
+            'symbol' => 'required|string|max:10',
             'notes' => 'nullable|string|max:1000',
             'status' => 'required|boolean',
         ]);
 
         try {
-            $category = $this->categoryService->createCategory($data);
+            $unit = $this->unitService->createUnit($data);
 
             return response()->json([
                 'success' => true,
-                'message' => __('Category added successfully'),
-                'category' => $category
+                'message' => __('Unit added successfully'),
+                'unit' => $unit
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -60,16 +55,16 @@ class ProductCategoryController extends Controller
     }
 
     /**
-     * Show the form for editing the specified category
+     * Show the form for editing the specified unit
      */
     public function edit($id)
     {
         try {
-            $category = $this->categoryService->findCategoryOrFail($id);
+            $unit = $this->unitService->findUnitOrFail($id);
 
             return response()->json([
                 'success' => true,
-                'category' => $category
+                'unit' => $unit
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -80,24 +75,25 @@ class ProductCategoryController extends Controller
     }
 
     /**
-     * Update the specified category
+     * Update the specified unit
      */
     public function update(Request $request, $id)
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'name_en' => 'nullable|string|max:255',
+            'symbol' => 'required|string|max:10',
             'notes' => 'nullable|string|max:1000',
             'status' => 'required|boolean',
         ]);
 
         try {
-            $category = $this->categoryService->updateCategory($id, $data);
+            $unit = $this->unitService->updateUnit($id, $data);
 
             return response()->json([
                 'success' => true,
-                'message' => __('Category updated successfully'),
-                'category' => $category
+                'message' => __('Unit updated successfully'),
+                'unit' => $unit
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -108,12 +104,12 @@ class ProductCategoryController extends Controller
     }
 
     /**
-     * Remove the specified category
+     * Remove the specified unit
      */
     public function destroy($id)
     {
         try {
-            $this->categoryService->deleteCategory($id);
+            $this->unitService->deleteUnit($id);
             return response()->json([
                 'success' => true,
                 'message' => __('Deleted Successfully')
@@ -127,21 +123,29 @@ class ProductCategoryController extends Controller
     }
 
     /**
-     * Search categories (AJAX)
+     * Search units (AJAX)
      */
     public function search(Request $request)
     {
         try {
             $search = $request->get('search', '');
             $perPage = $request->get('perPage', 10);
+            $page = $request->get('page', 1);
 
-            $categories = $this->categoryService->searchCategories($search, $perPage);
+            $units = $this->unitService->searchUnits($search, $perPage);
 
-            $view = view('product-categories.partials.table', compact('categories'))->render();
+            $tableHtml = view('units.partials.table', compact('units'))->render();
+
+            // إنشاء HTML للـ pagination
+            $paginationHtml = '';
+            if ($units->hasPages()) {
+                $paginationHtml = view('pagination::bootstrap-4', ['paginator' => $units])->render();
+            }
 
             return response()->json([
                 'success' => true,
-                'html' => $view
+                'html' => $tableHtml,
+                'pagination' => $paginationHtml
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -152,17 +156,17 @@ class ProductCategoryController extends Controller
     }
 
     /**
-     * Toggle category status
+     * Toggle unit status
      */
     public function toggleStatus($id)
     {
         try {
-            $category = $this->categoryService->toggleStatus($id);
+            $unit = $this->unitService->toggleStatus($id);
 
             return response()->json([
                 'success' => true,
                 'message' => __('Status updated successfully'),
-                'category' => $category
+                'unit' => $unit
             ]);
         } catch (\Exception $e) {
             return response()->json([

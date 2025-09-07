@@ -2,21 +2,21 @@
 
 namespace App\Repositories;
 
-use App\Models\ProductCategory;
+use App\Models\Unit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
-use App\Repositories\Interfaces\ProductCategoryRepositoryInterface;
+use App\Repositories\Interfaces\UnitRepositoryInterface;
 
-class ProductCategoryRepository extends BaseRepository implements ProductCategoryRepositoryInterface
+class UnitRepository extends BaseRepository implements UnitRepositoryInterface
 {
-    public function __construct(ProductCategory $model)
+    public function __construct(Unit $model)
     {
         parent::__construct($model);
     }
 
     /**
-     * Get all categories with search and pagination
+     * Get all units with search and pagination
      */
     public function getAllWithSearch(string $search = '', int $perPage = 10): LengthAwarePaginator
     {
@@ -30,7 +30,7 @@ class ProductCategoryRepository extends BaseRepository implements ProductCategor
     }
 
     /**
-     * Get all active categories
+     * Get all active units
      */
     public function getAllActive(): Collection
     {
@@ -38,7 +38,7 @@ class ProductCategoryRepository extends BaseRepository implements ProductCategor
     }
 
     /**
-     * Check if category name exists
+     * Check if unit name exists
      */
     public function nameExists(string $name, int $excludeId = null): bool
     {
@@ -52,35 +52,49 @@ class ProductCategoryRepository extends BaseRepository implements ProductCategor
     }
 
     /**
-     * Find category by ID
+     * Check if unit symbol exists
+     */
+    public function symbolExists(string $symbol, int $excludeId = null): bool
+    {
+        $query = $this->model->where('symbol', $symbol);
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->exists();
+    }
+
+    /**
+     * Find unit by ID
      */
     public function findById(int $id)
     {
-        return $this->find($id); // استخدام دالة BaseRepository
+        return $this->find($id);
     }
 
     /**
-     * Find category by ID or fail
+     * Find unit by ID or fail
      */
     public function findByIdOrFail(int $id)
     {
-        return $this->findOrFail($id); // استخدام دالة BaseRepository
+        return $this->findOrFail($id);
     }
 
     /**
-     * Get categories statistics
+     * Get units statistics
      */
     public function getStatistics(): array
     {
         return [
-            'total_categories' => $this->model->count(),
-            'active_categories' => $this->model->active()->count(),
-            'inactive_categories' => $this->model->inactive()->count(),
+            'total_units' => $this->model->count(),
+            'active_units' => $this->model->active()->count(),
+            'inactive_units' => $this->model->inactive()->count(),
         ];
     }
 
     /**
-     * Get total categories count
+     * Get total units count
      */
     public function getCount(): int
     {
@@ -88,7 +102,7 @@ class ProductCategoryRepository extends BaseRepository implements ProductCategor
     }
 
     /**
-     * Get active categories count
+     * Get active units count
      */
     public function getActiveCount(): int
     {

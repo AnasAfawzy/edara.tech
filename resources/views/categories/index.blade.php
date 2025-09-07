@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
-@section('title', __('Product Categories'))
+@section('title', __('Categories'))
 
 @section('content')
-    {!! breadcrumb([['title' => __('Inventory')], ['title' => __('Product Categories')]]) !!}
+    {!! breadcrumb([['title' => __('Inventory')], ['title' => __('Categories')]]) !!}
 
     <div class="container-fluid">
         <div class="row">
@@ -12,35 +12,25 @@
                     <!-- شريط البحث وعدد العناصر -->
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center">
-                            <form method="GET" action="{{ route('product-categories.index') }}"
-                                class="d-flex align-items-center">
-                                <input type="hidden" name="search" value="{{ $search ?? '' }}">
-                                <label for="perPage" class="form-label me-2 mb-0">{{ __('Show') }}:</label>
-                                <select name="perPage" id="perPage" class="form-select form-select-sm"
-                                    style="width: auto;" onchange="this.form.submit()">
-                                    <option value="5" {{ ($perPage ?? 10) == 5 ? 'selected' : '' }}>5</option>
-                                    <option value="10" {{ ($perPage ?? 10) == 10 ? 'selected' : '' }}>10</option>
-                                    <option value="25" {{ ($perPage ?? 10) == 25 ? 'selected' : '' }}>25</option>
-                                    <option value="50" {{ ($perPage ?? 10) == 50 ? 'selected' : '' }}>50</option>
-                                </select>
-                                <span class="ms-2">{{ __('entries') }}</span>
-                            </form>
+                            <label for="perPage" class="form-label me-2 mb-0">{{ __('Show') }}:</label>
+                            <select id="perPage" class="form-select form-select-sm" style="width: auto;">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                            <span class="ms-2">{{ __('entries') }}</span>
                         </div>
 
                         <div class="d-flex align-items-center gap-3">
                             <!-- البحث -->
-                            <form method="GET" action="{{ route('product-categories.index') }}"
-                                class="d-flex align-items-center">
-                                <input type="hidden" name="perPage" value="{{ $perPage ?? 10 }}">
+                            <div class="d-flex align-items-center">
                                 <label for="search" class="form-label me-2 mb-0">{{ __('Search') }}:</label>
                                 <div class="input-group" style="width: 250px;">
-                                    <input type="text" name="search" id="search" class="form-control form-control-sm"
-                                        placeholder="{{ __('Search categories...') }}" value="{{ $search ?? '' }}">
-                                    {{-- <button class="btn btn-outline-secondary btn-sm" type="submit">
-                                        <i class="icon-base ti tabler-search"></i>
-                                    </button> --}}
+                                    <input type="text" id="search" class="form-control form-control-sm"
+                                        placeholder="{{ __('Search categories...') }}">
                                 </div>
-                            </form>
+                            </div>
 
                             <!-- زر إضافة فئة جديدة -->
                             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
@@ -62,16 +52,18 @@
                                     <th>{{ __('Action') }}</th>
                                 </tr>
                             </thead>
-                            @include('product-categories.partials.table', ['categories' => $categories])
+                            @include('categories.partials.table', ['categories' => $categories])
                         </table>
                     </div>
 
                     <!-- Pagination -->
-                    @if ($categories instanceof \Illuminate\Pagination\LengthAwarePaginator && $categories->hasPages())
-                        <div>
-                            {{ $categories->appends(request()->query())->links() }}
-                        </div>
-                    @endif
+                    <div id="pagination-container">
+                        @if ($categories instanceof \Illuminate\Pagination\LengthAwarePaginator && $categories->hasPages())
+                            <div>
+                                {{ $categories->links() }}
+                            </div>
+                        @endif
+                    </div>
 
                 </div>
             </div>
@@ -141,7 +133,6 @@
                 </div>
                 <form id="editCategoryForm">
                     @csrf
-                    {{-- @method('PUT') --}}
                     <input type="hidden" id="edit-category-id" name="category_id">
                     <div class="modal-body">
                         <div class="row g-3">
@@ -192,12 +183,32 @@
     <script>
         // 🔥 تعريف المتغيرات في النطاق العام
         let createModal, editModal;
+        let currentPage = 1;
 
-        function reloadCategoriesTable() {
-            let search = document.getElementById('search').value;
+        // 🔥 دالة تنظيف البحث
+        function clearSearch() {
+            document.getElementById('search').value = '';
+            reloadCategoriesTable();
+        }
+
+        function reloadCategoriesTable(page = 1) {
+            let search = document.getElementById('search').value.trim();
             let perPage = document.getElementById('perPage').value;
 
-            fetch(`{{ route('product-categories.search') }}?search=${encodeURIComponent(search)}&perPage=${perPage}`, {
+            // 🔥 بناء URL بدون معاملات في الـ URL الرئيسي
+            let url = `{{ route('categories.search') }}`;
+            const params = new URLSearchParams();
+
+            if (search && search !== '') {
+                params.append('search', search);
+            }
+
+            params.append('perPage', perPage);
+            params.append('page', page);
+
+            url += '?' + params.toString();
+
+            fetch(url, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
@@ -206,12 +217,34 @@
                 .then(data => {
                     if (data.success) {
                         document.querySelector('#categoriesTable tbody').outerHTML = data.html;
+
+                        // تحديث الـ pagination
+                        if (data.pagination) {
+                            document.getElementById('pagination-container').innerHTML = data.pagination;
+                            attachPaginationListeners();
+                        }
+
                         attachEventListeners();
+
+                        // 🔥 الحفاظ على URL نظيف (بدون معاملات)
+                        window.history.replaceState({}, '', '{{ route('categories.index') }}');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                 });
+        }
+
+        function attachPaginationListeners() {
+            // إضافة event listeners لروابط الـ pagination
+            document.querySelectorAll('#pagination-container .pagination a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const url = new URL(this.href);
+                    const page = url.searchParams.get('page') || 1;
+                    reloadCategoriesTable(page);
+                });
+            });
         }
 
         function attachEventListeners() {
@@ -252,7 +285,7 @@
         }
 
         function loadCategoryForEdit(categoryId) {
-            fetch(`{{ url('product-categories') }}/${categoryId}/edit`, {
+            fetch(`{{ url('categories') }}/${categoryId}/edit`, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
@@ -268,7 +301,6 @@
                         const statusValue = data.category.status ? '1' : '0';
                         document.getElementById('edit-status').value = statusValue;
 
-                        // 🔥 استخدام المتغير العام
                         if (editModal) {
                             editModal.show();
                         }
@@ -300,7 +332,7 @@
                 cancelButtonText: "{{ __('Cancel') }}"
             }).then((result) => {
                 if (result.isConfirmed) {
-                    fetch(`{{ url('product-categories') }}/${categoryId}`, {
+                    fetch(`{{ url('categories') }}/${categoryId}`, {
                             method: 'DELETE',
                             headers: {
                                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -344,7 +376,7 @@
             const originalState = switchElement.checked;
             switchElement.disabled = true;
 
-            fetch(`{{ url('product-categories') }}/${categoryId}/toggle-status`, {
+            fetch(`{{ url('categories') }}/${categoryId}/toggle-status`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -385,7 +417,7 @@
             const createForm = document.getElementById('createCategoryForm');
             const editForm = document.getElementById('editCategoryForm');
 
-            // 🔥 تعريف المودالات في النطاق العام
+            // تعريف المودالات في النطاق العام
             createModal = new bootstrap.Modal(document.getElementById('createModal'));
             editModal = new bootstrap.Modal(document.getElementById('editModal'));
 
@@ -418,9 +450,10 @@
                     const originalText = submitBtn.innerHTML;
 
                     submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{{ __('Adding...') }}';
+                    submitBtn.innerHTML =
+                        '<span class="spinner-border spinner-border-sm me-2"></span>{{ __('Adding...') }}';
 
-                    fetch('{{ route('product-categories.store') }}', {
+                    fetch('{{ route('categories.store') }}', {
                             method: 'POST',
                             body: formData,
                             headers: {
@@ -479,7 +512,6 @@
 
                     const categoryId = document.getElementById('edit-category-id').value;
 
-                    // 🔥 تجميع البيانات بشكل مختلف
                     const data = {
                         name: document.getElementById('edit-category-name').value,
                         name_en: document.getElementById('edit-name-en').value || '',
@@ -493,9 +525,10 @@
                     const originalText = submitBtn.innerHTML;
 
                     submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{{ __('Updating...') }}';
+                    submitBtn.innerHTML =
+                        '<span class="spinner-border spinner-border-sm me-2"></span>{{ __('Updating...') }}';
 
-                    fetch(`{{ url('product-categories') }}/${categoryId}`, {
+                    fetch(`{{ url('categories') }}/${categoryId}`, {
                             method: 'POST',
                             body: JSON.stringify(data),
                             headers: {
@@ -507,7 +540,6 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                // 🔥 ترتيب العمليات بشكل صحيح
                                 editForm.reset();
                                 clearFormErrors(editForm);
                                 editModal.hide();
@@ -563,12 +595,21 @@
                 }
             });
 
-            // Live search
-            document.getElementById('search').addEventListener('keyup', function() {
+            // 🔥 Event listeners للبحث وتغيير عدد العناصر
+            let searchTimeout;
+            document.getElementById('search').addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    reloadCategoriesTable();
+                }, 300);
+            });
+
+            document.getElementById('perPage').addEventListener('change', function() {
                 reloadCategoriesTable();
             });
 
             attachEventListeners();
+            attachPaginationListeners();
         });
     </script>
 @endsection

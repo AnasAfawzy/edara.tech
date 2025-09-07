@@ -4,7 +4,7 @@ use Livewire\Livewire;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\RoleController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\UnitController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingController;
@@ -15,7 +15,7 @@ use App\Http\Controllers\CostCenterController;
 use App\Http\Controllers\JournalEntryController;
 use App\Http\Controllers\FinancialYearController;
 use App\Http\Controllers\UserManagementController;
-use App\Http\Controllers\ProductCategoryController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\AccountStatementController;
 use App\Http\Controllers\AccountingSettingsController;
 use App\Http\Controllers\OpeningJournalEntryController;
@@ -127,9 +127,13 @@ Route::group(
             Route::post('financial-years/{id}/close', [FinancialYearController::class, 'close'])->name('financial-years.close');
             Route::get('financial-years/search', [FinancialYearController::class, 'search'])->name('financial-years.search');
 
-            Route::get('/product-categories/search', [ProductCategoryController::class, 'search'])->name('product-categories.search');
-            Route::resource('product-categories', ProductCategoryController::class);
-            Route::post('/product-categories/{id}/toggle-status', [ProductCategoryController::class, 'toggleStatus'])->name('product-categories.toggle-status');
+            Route::get('/categories/search', [CategoryController::class, 'search'])->name('categories.search');
+            Route::resource('categories', CategoryController::class);
+            Route::post('/categories/{id}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('categories.toggle-status');
+
+            Route::get('/units/search', [UnitController::class, 'search'])->name('units.search');
+            Route::resource('units', UnitController::class);
+            Route::post('/units/{id}/toggle-status', [UnitController::class, 'toggleStatus'])->name('units.toggle-status');
 
             // Dashboard
             Route::get('/dashboard', function () {
