@@ -356,5 +356,30 @@
     "Unit name already exists": "اسم الوحدة موجود بالفعل",
     "Unit not found": "الوحدة غير موجودة",
     "Cannot delete unit with products": "لا يمكن حذف وحدة تحتوي على منتجات",
-    "Failed to update unit status": "فشل في تحديث حالة الوحدة"
+    "Failed to update unit status": "فشل في تحديث حالة الوحدة",
+    "Brands": "الماركات",
+    "Brand Name": "اسم الماركة",
+    "Add Brand": "إضافة ماركة",
+    "Edit Brand": "تعديل ماركة",
+    "Update Brand": "تحديث الماركة",
+    "Add New Brand": "إضافة ماركة جديدة",
+    "Search brands...": "البحث في الماركات...",
+    "No brands found": "لا توجد ماركات",
+
+    "This brand will be permanently deleted": "سيتم حذف هذه الماركة نهائياً",
+
+    "Brand added successfully": "تم إضافة الماركة بنجاح",
+    "Brand updated successfully": "تم تحديث الماركة بنجاح",
+    "Brand deleted successfully": "تم حذف الماركة بنجاح",
+    "Brand status updated successfully": "تم تحديث حالة الماركة بنجاح",
+
+    "An error occurred while adding the brand": "حدث خطأ أثناء إضافة الماركة",
+    "An error occurred while updating the brand": "حدث خطأ أثناء تحديث الماركة",
+    "An error occurred while deleting the brand": "حدث خطأ أثناء حذف الماركة",
+    "An error occurred while loading the brand data": "حدث خطأ أثناء تحميل بيانات الماركة",
+
+    "Brand name already exists": "اسم الماركة موجود بالفعل",
+    "Brand not found": "الماركة غير موجودة",
+    "Cannot delete brand with products": "لا يمكن حذف ماركة تحتوي على منتجات",
+    "Failed to update brand status": "فشل في تحديث حالة الماركة"
 }

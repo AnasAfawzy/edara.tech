@@ -177,5 +177,12 @@ return [
         'parent'     => 'inventory',
         'show_in_sidebar' => true,
     ],
-
+    [
+        'name'       => 'brands',
+        'label'      => 'Brands',
+        'icon'       => null,
+        'route'      => 'brands.index',
+        'parent'     => 'inventory',
+        'show_in_sidebar' => true,
+    ],
 ];

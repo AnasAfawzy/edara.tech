@@ -5,9 +5,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UnitController;
+use App\Http\Controllers\BrandController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CashVaultController;
 use App\Http\Controllers\WarehouseController;
@@ -15,7 +17,6 @@ use App\Http\Controllers\CostCenterController;
 use App\Http\Controllers\JournalEntryController;
 use App\Http\Controllers\FinancialYearController;
 use App\Http\Controllers\UserManagementController;
-use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\AccountStatementController;
 use App\Http\Controllers\AccountingSettingsController;
 use App\Http\Controllers\OpeningJournalEntryController;
@@ -134,6 +135,10 @@ Route::group(
             Route::get('/units/search', [UnitController::class, 'search'])->name('units.search');
             Route::resource('units', UnitController::class);
             Route::post('/units/{id}/toggle-status', [UnitController::class, 'toggleStatus'])->name('units.toggle-status');
+
+            Route::get('/brands/search', [BrandController::class, 'search'])->name('brands.search');
+            Route::resource('brands', BrandController::class);
+            Route::post('/brands/{id}/toggle-status', [BrandController::class, 'toggleStatus'])->name('brands.toggle-status');
 
             // Dashboard
             Route::get('/dashboard', function () {
