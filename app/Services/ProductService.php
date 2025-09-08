@@ -201,7 +201,7 @@ class ProductService extends BaseService
      */
     public function findProductOrFail(int $id)
     {
-        return $this->findOrFail($id);
+        return $this->productRepository->findByIdOrFail($id);
     }
 
     /**

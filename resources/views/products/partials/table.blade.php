@@ -47,15 +47,19 @@
                 </div>
             </td>
             <td class="text-center">
-                <div class="form-check form-switch d-flex justify-content-center">
-                    <input class="form-check-input toggle-status" type="checkbox" id="status-{{ $product->id }}"
-                        data-id="{{ $product->id }}" {{ $product->is_active ? 'checked' : '' }}>
+                <div class="d-flex justify-content-center">
+                    <!-- الـ Switch فقط بدون badge -->
+                    <div class="form-check form-switch">
+                        <input class="form-check-input toggle-status" type="checkbox" id="status-{{ $product->id }}"
+                            data-id="{{ $product->id }}" {{ $product->is_active ? 'checked' : '' }}>
+                    </div>
                 </div>
             </td>
             <td class="text-center">
                 <div class="d-flex justify-content-center gap-1">
                     <button type="button" class="btn btn-icon btn-text-info rounded-pill waves-effect view-product"
-                        data-id="{{ $product->id }}" title="{{ __('View') }}">
+                        data-id="{{ $product->id }}" data-url="{{ route('products.show', $product) }}"
+                        title="{{ __('View') }}" aria-label="{{ __('View') }}">
                         <i class="icon-base ti tabler-eye"></i>
                     </button>
                     <button type="button" class="btn btn-icon btn-text-primary rounded-pill waves-effect edit-product"

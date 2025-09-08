@@ -22,25 +22,20 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     {
         $query = $this->model->with(['category', 'brand', 'unit']);
 
-        // البحث
         if (!empty($search)) {
             $query->search($search);
         }
-
-        // الفلاتر
         if (!empty($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
         }
-
         if (!empty($filters['brand_id'])) {
             $query->where('brand_id', $filters['brand_id']);
         }
-
         if (!empty($filters['unit_id'])) {
             $query->where('unit_id', $filters['unit_id']);
         }
-
-        if (isset($filters['is_active'])) {
+        // أهم شرط: لا تستخدم where إذا كانت القيمة فارغة
+        if (isset($filters['is_active']) && $filters['is_active'] !== '') {
             $query->where('is_active', $filters['is_active']);
         }
 
@@ -56,6 +51,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             }
         }
 
+        // دائماً استخدم paginate حتى لو لم يوجد فلتر
         return $query->orderBy('name')->paginate($perPage);
     }
 

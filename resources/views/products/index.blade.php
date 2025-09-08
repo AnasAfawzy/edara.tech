@@ -99,7 +99,7 @@
 
                     <!-- Pagination -->
                     <div id="pagination-container">
-                        @if ($products instanceof \Illuminate\Pagination\LengthAwarePaginator && $products->hasPages())
+                        @if ($products instanceof \Illuminate\Pagination\LengthAwarePaginator)
                             <div>
                                 {{ $products->links() }}
                             </div>
@@ -448,7 +448,7 @@
 
     <!-- View Modal -->
     <div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">{{ __('Product Details') }}</h5>
@@ -458,6 +458,7 @@
                     <!-- سيتم ملء التفاصيل هنا -->
                 </div>
                 <div class="modal-footer">
+
                     <button type="button" class="btn btn-secondary"
                         data-bs-dismiss="modal">{{ __('Close') }}</button>
                 </div>
@@ -467,7 +468,6 @@
 @endsection
 
 @section('scripts')
-    <script src="{{ asset('assets/js/sweetalert2.js') }}"></script>
     <script>
         let createModal, editModal, viewModal;
         let currentPage = 1;
@@ -478,7 +478,7 @@
             document.getElementById('brandFilter').value = '';
             document.getElementById('unitFilter').value = '';
             document.getElementById('statusFilter').value = '';
-            reloadProductsTable();
+            reloadProductsTable(1);
         }
 
         function generateCode() {
@@ -497,32 +497,21 @@
         }
 
         function reloadProductsTable(page = 1) {
-            let search = document.getElementById('search').value.trim();
-            let perPage = document.getElementById('perPage').value;
-            let categoryId = document.getElementById('categoryFilter').value;
-            let brandId = document.getElementById('brandFilter').value;
-            let unitId = document.getElementById('unitFilter').value;
-            let status = document.getElementById('statusFilter').value;
+            currentPage = page;
+            let search = document.getElementById('search')?.value?.trim() ?? '';
+            let perPage = document.getElementById('perPage')?.value ?? 10;
+            let categoryId = document.getElementById('categoryFilter')?.value ?? '';
+            let brandId = document.getElementById('brandFilter')?.value ?? '';
+            let unitId = document.getElementById('unitFilter')?.value ?? '';
+            let status = document.getElementById('statusFilter')?.value ?? '';
 
             let url = `{{ route('products.search') }}`;
             const params = new URLSearchParams();
-
-            if (search && search !== '') {
-                params.append('search', search);
-            }
-            if (categoryId) {
-                params.append('category_id', categoryId);
-            }
-            if (brandId) {
-                params.append('brand_id', brandId);
-            }
-            if (unitId) {
-                params.append('unit_id', unitId);
-            }
-            if (status !== '') {
-                params.append('is_active', status);
-            }
-
+            if (search) params.append('search', search);
+            if (categoryId !== '') params.append('category_id', categoryId);
+            if (brandId !== '') params.append('brand_id', brandId);
+            if (unitId !== '') params.append('unit_id', unitId);
+            if (status !== '') params.append('is_active', status);
             params.append('perPage', perPage);
             params.append('page', page);
 
@@ -537,18 +526,23 @@
                 .then(data => {
                     if (data.success) {
                         document.querySelector('#productsTable tbody').outerHTML = data.html;
-
-                        if (data.pagination) {
-                            document.getElementById('pagination-container').innerHTML = data.pagination;
-                            attachPaginationListeners();
-                        }
-
+                        document.getElementById('pagination-container').innerHTML = data.pagination || '';
+                        attachPaginationListeners();
                         attachEventListeners();
-                        window.history.replaceState({}, '', '{{ route('products.index') }}');
+                    } else {
+                        Swal.fire({
+                            title: '{{ __('Error') }}',
+                            text: data.message || 'حدث خطأ في تحميل البيانات',
+                            icon: 'error'
+                        });
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
+                    Swal.fire({
+                        title: '{{ __('Error') }}',
+                        text: 'خطأ في الاتصال بالسيرفر أو البيانات غير متوقعة',
+                        icon: 'error'
+                    });
                 });
         }
 
@@ -564,98 +558,40 @@
         }
 
         function attachEventListeners() {
-            // View buttons
             document.querySelectorAll('.view-product').forEach(button => {
                 button.onclick = null;
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
                     const productId = this.getAttribute('data-id');
-                    if (productId) {
-                        viewProduct(productId);
-                    }
+                    if (productId) viewProduct(productId);
                 });
             });
 
-            // Edit buttons
             document.querySelectorAll('.edit-product').forEach(button => {
                 button.onclick = null;
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
                     const productId = this.getAttribute('data-id');
-                    if (productId) {
-                        loadProductForEdit(productId);
-                    }
+                    if (productId) loadProductForEdit(productId);
                 });
             });
 
-            // Delete buttons
             document.querySelectorAll('.delete-product').forEach(button => {
                 button.onclick = null;
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
                     const productId = this.getAttribute('data-id');
-                    if (productId) {
-                        deleteProduct(productId);
-                    }
+                    if (productId) deleteProduct(productId);
                 });
             });
 
-            // Status toggle switches
             document.querySelectorAll('.toggle-status').forEach(toggle => {
                 toggle.onchange = null;
                 toggle.addEventListener('change', function(e) {
                     const productId = this.getAttribute('data-id');
-                    if (productId) {
-                        toggleProductStatus(productId, this);
-                    }
+                    if (productId) toggleProductStatus(productId, this);
                 });
             });
-        }
-
-        function viewProduct(productId) {
-            fetch(`{{ url('products') }}/${productId}/edit`, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const product = data.product;
-                        const detailsHtml = `
-                        <div class="row">
-                            <div class="col-md-4">
-                                <img src="${product.image_url}" class="img-fluid rounded" alt="${product.name}">
-                            </div>
-                            <div class="col-md-8">
-                                <table class="table table-borderless">
-                                    <tr><td><strong>${'{{ __('Product Name') }}'}</strong></td><td>${product.name}</td></tr>
-                                    <tr><td><strong>${'{{ __('English Name') }}'}</strong></td><td>${product.name_en || '{{ __('Not specified') }}'}</td></tr>
-                                    <tr><td><strong>${'{{ __('Code') }}'}</strong></td><td>${product.code}</td></tr>
-                                    <tr><td><strong>${'{{ __('Barcode') }}'}</strong></td><td>${product.barcode || '{{ __('Not specified') }}'}</td></tr>
-                                    <tr><td><strong>${'{{ __('Category') }}'}</strong></td><td>${product.category?.name || ''}</td></tr>
-                                    <tr><td><strong>${'{{ __('Brand') }}'}</strong></td><td>${product.brand?.name || '{{ __('Not specified') }}'}</td></tr>
-                                    <tr><td><strong>${'{{ __('Unit') }}'}</strong></td><td>${product.unit?.name || ''}</td></tr>
-                                    <tr><td><strong>${'{{ __('Purchase Price') }}'}</strong></td><td>${product.purchase_price}</td></tr>
-                                    <tr><td><strong>${'{{ __('Sale Price') }}'}</strong></td><td>${product.sale_price}</td></tr>
-                                    <tr><td><strong>${'{{ __('Current Stock') }}'}</strong></td><td>${product.current_stock}</td></tr>
-                                    <tr><td><strong>${'{{ __('Status') }}'}</strong></td><td><span class="badge ${product.status_badge_class}">${product.formatted_status}</span></td></tr>
-                                </table>
-                            </div>
-                        </div>
-                        ${product.description ? `<div class="mt-3"><strong>${'{{ __('Description') }}'}</strong><p>${product.description}</p></div>` : ''}
-                        ${product.notes ? `<div class="mt-3"><strong>${'{{ __('Notes') }}'}</strong><p>${product.notes}</p></div>` : ''}
-                    `;
-
-                        document.getElementById('product-details').innerHTML = detailsHtml;
-                        if (viewModal) {
-                            viewModal.show();
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
         }
 
         function loadProductForEdit(productId) {
@@ -668,7 +604,6 @@
                 .then(data => {
                     if (data.success) {
                         const product = data.product;
-
                         document.getElementById('edit-product-id').value = product.id;
                         document.getElementById('edit-name').value = product.name;
                         document.getElementById('edit-name-en').value = product.name_en || '';
@@ -685,18 +620,15 @@
                         document.getElementById('edit-reorder-level').value = product.reorder_level || '';
                         document.getElementById('edit-description').value = product.description || '';
                         document.getElementById('edit-notes').value = product.notes || '';
-                        document.getElementById('edit-has-expiry').checked = product.has_expiry;
-                        document.getElementById('edit-is-active').checked = product.is_active;
-
-                        // عرض الصورة الحالية
+                        document.getElementById('edit-has-expiry').checked = !!product.has_expiry;
+                        document.getElementById('edit-is-active').checked = !!product.is_active;
                         if (product.image_url) {
                             document.getElementById('current-image-preview').innerHTML =
                                 `<img src="${product.image_url}" class="img-thumbnail" style="max-width: 100px;">`;
+                        } else {
+                            document.getElementById('current-image-preview').innerHTML = '';
                         }
-
-                        if (editModal) {
-                            editModal.show();
-                        }
+                        if (editModal) editModal.show();
                     } else {
                         Swal.fire({
                             title: '{{ __('Error') }}',
@@ -706,7 +638,33 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
+                    Swal.fire({
+                        title: '{{ __('Error') }}',
+                        text: 'خطأ في الاتصال أو البيانات',
+                        icon: 'error'
+                    });
+                });
+        }
+
+        function viewProduct(productId) {
+            const body = document.getElementById('product-details');
+            body.innerHTML = `<div class="text-center py-5"><div class="spinner-border"></div></div>`;
+
+            fetch(`{{ url('products') }}/${productId}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (!res.success) throw new Error();
+                    document.querySelector('#viewModal .modal-title').textContent = res.title ||
+                        '{{ __('Product Details') }}';
+                    body.innerHTML = res.html;
+                    viewModal.show();
+                })
+                .catch(() => {
+                    body.innerHTML = `<div class="alert alert-danger mb-0">{{ __('Error loading product') }}</div>`;
                 });
         }
 
@@ -738,7 +696,7 @@
                                     timer: 1500,
                                     showConfirmButton: false
                                 }).then(() => {
-                                    reloadProductsTable();
+                                    reloadProductsTable(currentPage);
                                 });
                             } else {
                                 Swal.fire({
@@ -770,24 +728,55 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        // تحديث حالة الـ switch بشكل صحيح
+                        switchElement.checked = data.new_status;
+                        switchElement.disabled = false;
+
+                        // عرض رسالة نجاح
                         Swal.fire({
                             title: "{{ __('Success') }}",
                             text: data.message,
                             icon: "success",
-                            timer: 1500,
+                            timer: 1000,
                             showConfirmButton: false
-                        }).then(() => {
-                            reloadProductsTable();
                         });
+
+                        // استخدام reloadProductsTable لإعادة تحميل الجدول
+                        reloadProductsTable(currentPage);
                     } else {
                         throw new Error(data.message || 'Failed to update status');
                     }
                 })
                 .catch(error => {
                     console.error('Toggle status error:', error);
-                    switchElement.checked = !originalState;
+                    // إرجاع الحالة الأصلية في حالة الخطأ
+                    switchElement.checked = originalState;
                     switchElement.disabled = false;
+
+                    Swal.fire({
+                        title: "{{ __('Error') }}",
+                        text: error.message || 'حدث خطأ في تحديث الحالة',
+                        icon: "error"
+                    });
                 });
+        }
+
+        function clearFormErrors(form) {
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            form.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+        }
+
+        function showFormErrors(form, errors) {
+            Object.keys(errors).forEach(key => {
+                const input = form.querySelector(`[name="${key}"]`);
+                if (input) {
+                    input.classList.add('is-invalid');
+                    const feedback = input.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.textContent = errors[key][0];
+                    }
+                }
+            });
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -798,34 +787,14 @@
             editModal = new bootstrap.Modal(document.getElementById('editModal'));
             viewModal = new bootstrap.Modal(document.getElementById('viewModal'));
 
-            function clearFormErrors(form) {
-                form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-                form.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
-            }
-
-            function showFormErrors(form, errors) {
-                Object.keys(errors).forEach(key => {
-                    const input = form.querySelector(`[name="${key}"]`);
-                    if (input) {
-                        input.classList.add('is-invalid');
-                        const feedback = input.nextElementSibling;
-                        if (feedback && feedback.classList.contains('invalid-feedback')) {
-                            feedback.textContent = errors[key][0];
-                        }
-                    }
-                });
-            }
-
-            // Create Product
+            // معالجة form الإنشاء
             if (createForm) {
                 createForm.addEventListener('submit', function(e) {
                     e.preventDefault();
                     clearFormErrors(this);
-
                     const formData = new FormData(this);
                     const submitBtn = this.querySelector('button[type="submit"]');
                     const originalText = submitBtn.innerHTML;
-
                     submitBtn.disabled = true;
                     submitBtn.innerHTML =
                         '<span class="spinner-border spinner-border-sm me-2"></span>{{ __('Adding...') }}';
@@ -844,7 +813,6 @@
                                 createForm.reset();
                                 clearFormErrors(createForm);
                                 createModal.hide();
-
                                 Swal.fire({
                                     title: '{{ __('Success') }}',
                                     text: data.message,
@@ -852,8 +820,7 @@
                                     timer: 1500,
                                     showConfirmButton: false
                                 });
-
-                                reloadProductsTable();
+                                reloadProductsTable(currentPage);
                             } else {
                                 if (data.errors) {
                                     showFormErrors(createForm, data.errors);
@@ -876,19 +843,16 @@
                 });
             }
 
-            // Update Product
+            // معالجة form التعديل
             if (editForm) {
                 editForm.addEventListener('submit', function(e) {
                     e.preventDefault();
                     clearFormErrors(this);
-
                     const productId = document.getElementById('edit-product-id').value;
                     const formData = new FormData(this);
                     formData.append('_method', 'PUT');
-
                     const submitBtn = this.querySelector('button[type="submit"]');
                     const originalText = submitBtn.innerHTML;
-
                     submitBtn.disabled = true;
                     submitBtn.innerHTML =
                         '<span class="spinner-border spinner-border-sm me-2"></span>{{ __('Updating...') }}';
@@ -907,7 +871,6 @@
                                 editForm.reset();
                                 clearFormErrors(editForm);
                                 editModal.hide();
-
                                 Swal.fire({
                                     title: '{{ __('Success') }}',
                                     text: data.message,
@@ -915,8 +878,7 @@
                                     timer: 1500,
                                     showConfirmButton: false
                                 });
-
-                                reloadProductsTable();
+                                reloadProductsTable(currentPage);
                             } else {
                                 if (data.errors) {
                                     showFormErrors(editForm, data.errors);
@@ -939,7 +901,7 @@
                 });
             }
 
-            // Clear form when modal is hidden
+            // تنظيف الـ forms عند إغلاق المودال
             document.getElementById('createModal').addEventListener('hidden.bs.modal', function() {
                 if (createForm) {
                     createForm.reset();
@@ -955,38 +917,33 @@
                 }
             });
 
-            // Event listeners للبحث والفلاتر
+            // ربط الفلاتر والبحث
+            document.getElementById('perPage')?.addEventListener('change', function() {
+                reloadProductsTable(1);
+            });
+
             let searchTimeout;
-            document.getElementById('search').addEventListener('input', function() {
+            document.getElementById('search')?.addEventListener('input', function() {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
-                    reloadProductsTable();
+                    reloadProductsTable(1);
                 }, 300);
             });
 
-            document.getElementById('perPage').addEventListener('change', function() {
-                reloadProductsTable();
+            document.getElementById('categoryFilter')?.addEventListener('change', function() {
+                reloadProductsTable(1);
+            });
+            document.getElementById('brandFilter')?.addEventListener('change', function() {
+                reloadProductsTable(1);
+            });
+            document.getElementById('unitFilter')?.addEventListener('change', function() {
+                reloadProductsTable(1);
+            });
+            document.getElementById('statusFilter')?.addEventListener('change', function() {
+                reloadProductsTable(1);
             });
 
-            document.getElementById('categoryFilter').addEventListener('change', function() {
-                reloadProductsTable();
-            });
-
-            document.getElementById('brandFilter').addEventListener('change', function() {
-                reloadProductsTable();
-            });
-
-            document.getElementById('unitFilter').addEventListener('change', function() {
-                reloadProductsTable();
-            });
-
-            document.getElementById('statusFilter').addEventListener('change', function() {
-                reloadProductsTable();
-            });
-
-            // Generate code on page load
             generateCode();
-
             attachEventListeners();
             attachPaginationListeners();
         });

@@ -27,10 +27,10 @@ class Brand extends Model
     /**
      * Get the products in this brand
      */
-    // public function products()
-    // {
-    //     return $this->hasMany(\App\Models\Product::class, 'brand_id');
-    // }
+    public function products()
+    {
+        return $this->hasMany(\App\Models\Product::class, 'brand_id');
+    }
 
     /**
      * Get the user who created this brand

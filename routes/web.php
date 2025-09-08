@@ -146,7 +146,8 @@ Route::group(
             Route::get('/products/low-stock', [ProductController::class, 'lowStock'])->name('products.low-stock');
             Route::resource('products', ProductController::class);
             Route::post('/products/{id}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
-
+            Route::get('products/{product}/print', [ProductController::class, 'print'])
+                ->name('products.print');
             // Dashboard
             Route::get('/dashboard', function () {
                 return view('dashboard');

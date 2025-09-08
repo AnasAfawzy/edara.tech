@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use Illuminate\Http\Request;
-use App\Services\{UnitService, BrandService, ProductService, CategoryService};
 use Illuminate\Http\JsonResponse;
+use App\Services\{UnitService, BrandService, ProductService, CategoryService};
 
 class ProductController extends Controller
 {
@@ -39,6 +40,22 @@ class ProductController extends Controller
         return view('products.index', compact('products', 'categories', 'brands', 'units'));
     }
 
+    public function show(Product $product, Request $request)
+    {
+        if ($request->ajax()) {
+            return response()->json([
+                'success'  => true,
+                'title'    => $product->name,
+                'html'     => view('products.partials.product-view', compact('product'))->render(),
+                'edit_url' => route('products.edit', $product),
+            ]);
+        }
+        // صفحة مستقلة بنفس العرض
+        return view('products.show', compact('product'));
+    }
+
+
+
     /**
      * Search products via AJAX
      */
@@ -66,10 +83,10 @@ class ProductController extends Controller
 
             $tableHtml = view('products.partials.table', compact('products'))->render();
 
-            $paginationHtml = '';
-            if ($products->hasPages()) {
-                $paginationHtml = view('pagination::bootstrap-4', ['paginator' => $products])->render();
-            }
+            // استخدم ملف الباجينيت المخصص
+            $paginationHtml = view('products.partials.pagination', [
+                'products' => $products,
+            ])->render();
 
             return response()->json([
                 'success' => true,
@@ -219,7 +236,8 @@ class ProductController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => __('Product status updated successfully'),
-                'product' => $product
+                'new_status' => (bool) $product->is_active, // تأكد من إرجاع boolean
+                'product_id' => $product->id
             ]);
         } catch (\Exception $e) {
             return response()->json([
