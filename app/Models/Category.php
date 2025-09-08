@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\{User, Product};
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Category extends Model
 {
@@ -28,17 +29,17 @@ class Category extends Model
     /**
      * Get the products in this category
      */
-    // public function products()
-    // {
-    //     return $this->hasMany(\App\Models\Product::class, 'category_id');
-    // }
+    public function products()
+    {
+        return $this->hasMany(Product::class, 'category_id');
+    }
 
     /**
      * Get the user who created this category
      */
     public function creator()
     {
-        return $this->belongsTo(\App\Models\User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**
@@ -46,7 +47,7 @@ class Category extends Model
      */
     public function updater()
     {
-        return $this->belongsTo(\App\Models\User::class, 'updated_by');
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
     /**

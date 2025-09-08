@@ -28,10 +28,10 @@ class Unit extends Model
     /**
      * Get the products using this unit
      */
-    // public function products()
-    // {
-    //     return $this->hasMany(\App\Models\Product::class, 'unit_id');
-    // }
+    public function products()
+    {
+        return $this->hasMany(\App\Models\Product::class, 'unit_id');
+    }
 
     /**
      * Get the user who created this unit

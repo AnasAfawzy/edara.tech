@@ -2,14 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Unit;
-use App\Models\Brand;
-use App\Models\Category;
 use Illuminate\Http\Request;
-use App\Services\UnitService;
-use App\Services\BrandService;
-use App\Services\ProductService;
-use App\Services\CategoryService;
+use App\Services\{UnitService, BrandService, ProductService, CategoryService};
 use Illuminate\Http\JsonResponse;
 
 class ProductController extends Controller

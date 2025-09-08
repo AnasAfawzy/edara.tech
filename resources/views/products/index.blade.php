@@ -78,7 +78,7 @@
                     </div>
 
                     <div class="card-datatable table-responsive pt-0">
-                        <table class="table" id="productsTable">
+                        <table class="table align-middle text-center" id="productsTable">
                             <thead>
                                 <tr>
                                     <th>{{ __('Product') }}</th>
