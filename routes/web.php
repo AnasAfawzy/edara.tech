@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UnitController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ProductController;
@@ -16,7 +17,9 @@ use App\Http\Controllers\CashVaultController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\CostCenterController;
 use App\Http\Controllers\JournalEntryController;
+use App\Http\Controllers\OpeningStockController;
 use App\Http\Controllers\FinancialYearController;
+use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\AccountStatementController;
 use App\Http\Controllers\AccountingSettingsController;
@@ -148,6 +151,30 @@ Route::group(
             Route::post('/products/{id}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
             Route::get('products/{product}/print', [ProductController::class, 'print'])
                 ->name('products.print');
+
+
+            Route::group(['prefix' => 'opening-stocks', 'as' => 'opening-stocks.'], function () {
+                Route::get('/', [OpeningStockController::class, 'index'])->name('index');
+                Route::get('/search', [OpeningStockController::class, 'search'])->name('search');
+                Route::post('/', [OpeningStockController::class, 'store'])->name('store');
+                Route::post('/bulk', [OpeningStockController::class, 'bulkStore'])->name('bulk-store');
+                Route::get('/bulk-products', [OpeningStockController::class, 'getBulkProducts'])->name('bulk-products');
+                Route::get('/{id}', [OpeningStockController::class, 'show'])->name('show');
+                Route::get('/{id}/edit', [OpeningStockController::class, 'edit'])->name('edit');
+                Route::put('/{id}', [OpeningStockController::class, 'update'])->name('update');
+                Route::delete('/{id}', [OpeningStockController::class, 'destroy'])->name('destroy');
+                Route::get('/export/excel', [OpeningStockController::class, 'export'])->name('export');
+                Route::post('/import/excel', [OpeningStockController::class, 'import'])->name('import');
+                Route::get('/download/template', [OpeningStockController::class, 'downloadTemplate'])->name('download-template');
+            });
+
+            Route::group(['prefix' => 'stock-movements', 'as' => 'stock-movements.'], function () {
+                Route::get('/', [StockMovementController::class, 'index'])->name('index');
+                Route::get('/search', [StockMovementController::class, 'search'])->name('search');
+                Route::get('/{id}', [StockMovementController::class, 'show'])->name('show');
+            });
+            Route::get('opening-stocks/export', [OpeningStockController::class, 'export'])->name('opening-stocks.export');
+
             // Dashboard
             Route::get('/dashboard', function () {
                 return view('dashboard');

@@ -16,7 +16,9 @@ use App\Repositories\CashVaultRepository;
 use App\Repositories\WarehouseRepository;
 use App\Repositories\CostCenterRepository;
 use App\Repositories\JournalEntryRepository;
+use App\Repositories\OpeningStockRepository;
 use App\Repositories\FinancialYearRepository;
+use App\Repositories\StockMovementRepository;
 use App\Repositories\AccountStatementRepository;
 use App\Repositories\Interfaces\BankRepositoryInterface;
 use App\Repositories\Interfaces\RoleRepositoryInterface;
@@ -31,7 +33,9 @@ use App\Repositories\Interfaces\CashVaultRepositoryInterface;
 use App\Repositories\Interfaces\WarehouseRepositoryInterface;
 use App\Repositories\Interfaces\CostCenterRepositoryInterface;
 use App\Repositories\Interfaces\JournalEntryRepositoryInterface;
+use App\Repositories\Interfaces\OpeningStockRepositoryInterface;
 use App\Repositories\Interfaces\FinancialYearRepositoryInterface;
+use App\Repositories\Interfaces\StockMovementRepositoryInterface;
 use App\Repositories\Interfaces\AccountStatementRepositoryInterface;
 
 
@@ -55,6 +59,8 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(UnitRepositoryInterface::class, UnitRepository::class);
         $this->app->bind(BrandRepositoryInterface::class, BrandRepository::class);
         $this->app->bind(ProductRepositoryInterface::class, ProductRepository::class);
+        $this->app->bind(OpeningStockRepositoryInterface::class, OpeningStockRepository::class);
+        $this->app->bind(StockMovementRepositoryInterface::class, StockMovementRepository::class);
     }
 
     public function boot(): void

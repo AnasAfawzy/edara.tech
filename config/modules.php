@@ -174,7 +174,7 @@ return [
         'label'      => 'Units',
         'icon'       => null,
         'route'      => 'units.index',
-        'parent'     => 'inventory',
+        'parent'     => 'Inventory',
         'show_in_sidebar' => true,
     ],
     [
@@ -190,6 +190,24 @@ return [
         'label'      => 'Products',
         'icon'       => null,
         'route'      => 'products.index',
+        'parent'     => 'Inventory',
+        'show_in_sidebar' => true,
+    ],
+    // إضافة أرصدة أول المدة
+    [
+        'name'       => 'opening_stocks',
+        'label'      => 'Opening Stocks',
+        'icon'       => null,
+        'route'      => 'opening-stocks.index',
+        'parent'     => 'Inventory',
+        'show_in_sidebar' => true,
+    ],
+    // إضافة حركات المخزون
+    [
+        'name'       => 'stock_movements',
+        'label'      => 'Stock Movements',
+        'icon'       => null,
+        'route'      => 'stock-movements.index',
         'parent'     => 'Inventory',
         'show_in_sidebar' => true,
     ],

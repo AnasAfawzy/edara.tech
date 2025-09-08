@@ -206,4 +206,19 @@ class Product extends Model
                 return 'bg-label-success';
         }
     }
+
+    public function openingStocks()
+    {
+        return $this->hasMany(OpeningStock::class);
+    }
+
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
+    public function currentOpeningStock()
+    {
+        return $this->hasOne(OpeningStock::class)->where('is_active', true)->latest('opening_date');
+    }
 }
